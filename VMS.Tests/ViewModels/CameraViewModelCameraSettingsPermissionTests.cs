@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using VMS.Interfaces;
 using VMS.Models;
@@ -59,6 +60,26 @@ namespace VMS.Tests.ViewModels
             Assert.False(vm.SaveSettingsCommand.CanExecute(null));
             vm.SaveSettingsCommand.Execute(null);
             Assert.Equal(0, config.LoadCount);  // 저장 경로에 들어가지 않음
+        }
+
+        [Fact]
+        public void LockHint_ShownOnlyWithoutPermission_AndNotifies()
+        {
+            // 대조 02 #4 — 미로그인 · Operator 는 칸이 꺼지는데 이유가 화면에 없었다
+            var (vm, _) = MakeVm();
+            Assert.Null(vm.CameraSettingsLockHint);
+
+            var changed = new List<string?>();
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+            vm.CanEditCameraSettings = false;
+
+            Assert.Contains(nameof(CameraViewModel.CameraSettingsLockHint), changed);
+            Assert.NotNull(vm.CameraSettingsLockHint);
+            Assert.Contains("Engineer", vm.CameraSettingsLockHint);
+            Assert.Contains("[Save Parameter]", vm.CameraSettingsLockHint);
+
+            vm.CanEditCameraSettings = true;
+            Assert.Null(vm.CameraSettingsLockHint);
         }
 
         [Fact]

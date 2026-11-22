@@ -559,13 +559,10 @@ namespace VMS.VisionSetup.Services
                         polar.CenterY = Convert.ToDouble(pcy);
                         if (sourceResult.Data.TryGetValue("Radius", out var prObj))
                         {
-                            double r = Convert.ToDouble(prObj);
-                            // 사용자가 InnerRadius/OuterRadius를 명시 안 했으면 (둘 다 0) 합리적 기본값
-                            if (polar.OuterRadius <= 0 || polar.InnerRadius < 0)
-                            {
-                                polar.InnerRadius = Math.Max(0, r * 0.6);
-                                polar.OuterRadius = r * 1.1;
-                            }
+                            // 새로 놓아 반지름을 아직 넣지 않은 도구만 원 반지름의 0.6 배 · 1.1 배로 한 번 채운다.
+                            // 반지름을 직접 넣었거나 레시피에서 불러온 도구는 그대로 둔다(기존 레시피 결과 유지).
+                            // 종전 조건(Outer <= 0 || Inner < 0)은 속성 범위 제한 때문에 성립한 적이 없다.
+                            polar.TryApplyAutoRadii(Convert.ToDouble(prObj));
                         }
                         continue; // fixture 경로 스킵
                     }

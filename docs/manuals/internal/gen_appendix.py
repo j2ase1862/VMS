@@ -6,6 +6,22 @@ PARAMS = os.path.normpath(os.path.join(HERE, "..", "..", "gs", "pipeline", "_too
 OUT = os.path.join(HERE, "src", "13_appendix.html")
 tools = json.load(io.open(PARAMS, encoding="utf-8"))
 
+# 동결 자료(docs/gs) 이후 Tool Settings 에 생긴 행 — 동결 파일은 고치지 않고 여기서 끼워 넣는다.
+#   (도구 이름 앞부분, 이 라벨 뒤에, 행) — 행의 desc 가 있으면 DESC 보다 먼저 쓴다.
+EXTRA = [
+  ("Threshold", "Max Value", {"label": "Threshold Type", "param": "ThresholdType", "ctrl": "선택(목록)", "enum": "ThresholdType",
+    "desc": "이진화 방식 — Binary(임계값 초과=Max Value) · BinaryInv(반대) · Trunc(임계값으로 자름) · ToZero · ToZeroInv. Use Otsu · Use Adaptive 와 함께 쓴다"}),
+  ("Caliper", "Edge Selection", {"label": "Expected Width (px)", "param": "ExpectedWidth", "ctrl": "입력",
+    "desc": "Edge Pair Width — Mode 가 EdgePair 일 때 채택할 두 엣지 사이 기대 폭(px)"}),
+  ("Caliper", "Expected Width (px)", {"label": "Width Tolerance (±px)", "param": "WidthTolerance", "ctrl": "입력",
+    "desc": "Edge Pair Width — 기대 폭 ± 이 값 안의 엣지 쌍만 채택"}),
+]
+for prefix, after, row in EXTRA:
+    tool = next(x for x in tools if x["tool"].startswith(prefix))
+    labels = [p["label"] for p in tool["params"]]
+    if row["label"] not in labels:
+        tool["params"].insert(labels.index(after) + 1, row)
+
 DESC = {
   "ThresholdValue":"이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리","MaxValue":"이진화 시 전경에 적용할 값(보통 255)","UseOtsu":"Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)","UseAdaptive":"적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)","BlockSize":"적응형 이진화 국소 블록 크기(홀수)","CValue":"적응형 이진화 보정 상수(클수록 전경 감소)",
   "BlurType":"블러 종류(Gaussian · Median · Box 등)","KernelSize":"커널 크기(홀수). 클수록 강한 평활화","SigmaX":"가우시안 X 표준편차(0 이면 커널에서 자동)","SigmaY":"가우시안 Y 표준편차(0 이면 SigmaX 사용)",
@@ -119,7 +135,7 @@ for cat, ts in cats.items():
             ctrl = p["ctrl"]
             if p.get("enum"): ctrl += f' ({p["enum"]})'
             elif p.get("min") or p.get("max"): ctrl += f' [{p.get("min","")}~{p.get("max","")}]'
-            d = DESC.get(p["param"], "")
+            d = p.get("desc") or DESC.get(p["param"], "")
             out.append(f'<tr><td>{esc(p["label"])}</td><td>{esc(ctrl)}</td><td>{esc(d)}</td></tr>\n')
         out.append('</table>\n')
 out.append('''<h3 id="appx-results">13.3 검사 결과 값 이름 (PLC 매핑 · Web 이력)</h3>

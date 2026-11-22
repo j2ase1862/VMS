@@ -789,7 +789,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 </ol>
 
 <h4>[Work Orders] — 작업지시 선택 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-4</span></h4>
-<figure><img src="../../gs/screenshots/v3/vms/dlg_WorkOrders.png" data-width="560" alt="Work Orders 창">
+<figure><img src="figs/recap/vms/dlg_WorkOrders.png" data-width="560" alt="Work Orders 창">
 <figcaption>Work Orders 창 — 상태 필터 · [Refresh] · 목록(Order No · Product · Recipe · Progress · Status · Planned Start) · [Cancel] / [Select]</figcaption></figure>
 <ul>
   <li>작업자 로그인 후 활성화됩니다. 누르면 Web 서버에서 <strong>이 라인에 배정된</strong> 작업지시 목록을 가져옵니다.</li>
@@ -932,7 +932,7 @@ VMS 는 64비트 프로그램이라 32비트 드라이버를 읽지 못합니다
 
 <h4>Web Parameters <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-4-18</span></h4>
 <figure><img src="../../gs/screenshots/v3/vms_ctl/S3_sidepanel_00_sec_web_parameters.png" data-width="290" alt="Web Parameters 섹션"><figcaption>Web Parameters — [Sync Parameters]</figcaption></figure>
-<figure><img src="../../gs/screenshots/v3/vms/dlg_SyncParameters.png" data-width="480" alt="Inspection Parameters 창"><figcaption>Inspection Parameters 창 — 레시피 콤보 · [Sync] · 코드 / 값 / 설명 / 단위</figcaption></figure>
+<figure><img src="figs/recap/vms/dlg_SyncParameters.png" data-width="480" alt="Inspection Parameters 창"><figcaption>Inspection Parameters 창 — 레시피 콤보 · [Sync] · 코드 / 값 / 설명 / 단위 (보기 전용 — 검사에 쓰는 레시피 연결은 바뀌지 않음)</figcaption></figure>
 <p>Web 의 레시피 파라미터(검사 기준값)를 지금 즉시 가져와 표로 보여 줍니다. 평소에는 60 초마다 자동 동기화되므로 기다리지 않고 바로 반영하고 싶을 때만 씁니다. 단독 모드에서는 "Parameter Sync Service is not available" 안내가 뜹니다.</p>
 <ul>
   <li>콤보에서 지금 운전에 연결된 레시피를 고르면 그 값을 새로 받아 반영합니다. <strong>다른 레시피를 고르면 값을 보기만</strong> 하며(아래 줄에 "보기 전용"), 검사에 쓰는 기준값과 결과를 올릴 레시피는 바뀌지 않습니다. 레시피를 불러오지 않은 상태에서 창을 열어도 마찬가지입니다.</li>
@@ -2695,6 +2695,7 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><th>파라미터 (UI 라벨)</th><th>컨트롤 / 범위</th><th>설명</th></tr>
 <tr><td>Threshold Value</td><td>슬라이더 [0~255]</td><td>이진화 임계값. 픽셀값이 이 값보다 크면 전경(흰색)으로 처리</td></tr>
 <tr><td>Max Value</td><td>슬라이더 [0~255]</td><td>이진화 시 전경에 적용할 값(보통 255)</td></tr>
+<tr><td>Threshold Type</td><td>선택(목록) (ThresholdType)</td><td>이진화 방식 — Binary(임계값 초과=Max Value) · BinaryInv(반대) · Trunc(임계값으로 자름) · ToZero · ToZeroInv. Use Otsu · Use Adaptive 와 함께 쓴다</td></tr>
 <tr><td>Use Otsu</td><td>체크박스</td><td>Otsu 자동 임계값 사용(체크 시 Threshold Value 무시)</td></tr>
 <tr><td>Use Adaptive</td><td>체크박스</td><td>적응형 이진화(국소 영역별 임계값 — 조명 불균일에 강함)</td></tr>
 <tr><td>Block Size</td><td>슬라이더 [3~51]</td><td>적응형 이진화 국소 블록 크기(홀수)</td></tr>
@@ -2846,6 +2847,8 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
 <tr><td>Max Edges</td><td>슬라이더 [1~50]</td><td>검출할 최대 에지 수</td></tr>
 <tr><td>Scorer Mode</td><td>선택(목록) (ScorerMode)</td><td>에지 점수 산정 방식</td></tr>
 <tr><td>Edge Selection</td><td>선택(목록) (EdgeSelectionMode)</td><td>사용할 에지 선택 방식(첫 · 최강 · 마지막 등)</td></tr>
+<tr><td>Expected Width (px)</td><td>입력</td><td>Edge Pair Width — Mode 가 EdgePair 일 때 채택할 두 엣지 사이 기대 폭(px)</td></tr>
+<tr><td>Width Tolerance (±px)</td><td>입력</td><td>Edge Pair Width — 기대 폭 ± 이 값 안의 엣지 쌍만 채택</td></tr>
 <tr><td>Projection Mode</td><td>선택(목록) (ProjectionMode)</td><td>프로파일 투영 방식</td></tr>
 <tr><td>Gaussian Filter</td><td>BoolParameter</td><td>가우시안 필터 적용</td></tr>
 <tr><td>Gaussian Sigma</td><td>슬라이더 [0.3~5.0]</td><td>가우시안 시그마</td></tr>
@@ -3350,8 +3353,10 @@ VMS 사이드 패널 External Tools 의 [Vision Tool Setup] 또는 시작 메뉴
   <li>[발급] → "발급 확인" 창에서 내용을 확인합니다. 규칙에 어긋나면 "발급 규칙 위반" 이 나옵니다 — 고객명 · 지문 필수, 좌석 1 이상, Trial · Internal 은 실행 만료 필수, Internal 은 90 일 이내, 지문 <code>*</code>(모든 PC)는 Internal 만.</li>
   <li>만들어진 <code>license.lic</code> 를 고객 PC 의 설정 마법사 [라이선스 파일 가져오기...] 로 설치합니다(<a class="ref" href="#install-license">§2.6</a>). 파일은 <code>C:\ProgramData\BODA\VMS\license.lic</code> 에 들어갑니다.</li>
 </ol>
+<figure><img src="figs/recap/licgen/licgen_issue.png" data-width="620" alt="LicGen 라이선스 발급 탭"><figcaption>[라이선스 발급] 탭 — 위 배너(서명 키 · 백업 상태 · [새로 고침] · [백업 실행]), 고객명 · 종류 · 서명 키 · 대상 PC 지문 · 좌석 수 · 유지보수 만료 · 실행 만료 · 확장 옵션 5 개 · [발급] (예시 값)</figcaption></figure>
 <p>라이선스 번호는 <code>LIC-연도-순번</code> 으로 자동으로 붙습니다. 확장 옵션을 하나도 고르지 않으면 기본 구성 라이선스입니다(<a class="ref" href="#overview-options">§1.6</a>). 옵션 칸이 생기기 전에 발급해 옵션이 적혀 있지 않은 라이선스는 확장 옵션 전부로 동작합니다.</p>
 <h4>발급 대장 <span class="video" title="이 기능을 따라 하는 사용 영상">▶ 영상 V-13-2</span></h4>
+<figure><img src="figs/recap/licgen/licgen_ledger.png" data-width="620" alt="LicGen 발급 대장 탭"><figcaption>[발급 대장] 탭 — 위에 건수와 대장 파일 위치, 최신 발급이 맨 위, 아래 비고 칸과 [비고 저장] (예시 대장 3 건)</figcaption></figure>
 <p>[발급 대장] 탭에 발급한 라이선스가 한 줄씩 남습니다(라이선스 ID · 고객명 · 종류 · 지문 · 좌석 · 유지보수 · 실행 만료 · 발급 시각 · 발급자 · 비고 — 옵션 열은 없음). 긴 고객명 · 비고는 줄여 보이고 마우스를 올리면 전체가 나옵니다. 줄을 고르고 비고를 적어 [비고 저장] 합니다. 대장 파일은 발급 PC 의 <code>%USERPROFILE%\.boda-licgen\ledger.jsonl</code> 이며 손으로 고치지 않습니다.</p>
 <ul>
   <li>발급한 주가 끝나기 전에 위쪽 [백업 실행] 으로 서명 키 · 대장을 오프라인 USB 두 개에 백업합니다. 창 위쪽 배너는 백업 미반영 발급 건수를 <strong>매체마다</strong> 보여 줍니다(예: <code>T7 Shield [..] 0건 · KGD-SSD [..] 3건</code>). 두 매체 모두 0건이 되어 노란 글자가 사라져야 끝입니다 — 한 매체만 갱신하면 다른 매체의 건수가 남고 경고도 그대로입니다.</li>

@@ -368,6 +368,14 @@ namespace VMS.Services
                && !string.Equals(previousSnapshot, currentSnapshot, StringComparison.Ordinal);
 
         /// <summary>
+        /// Start 노드가 없을 때 System Log 에 남기는 안내. 시퀀스는 운전을 시작할 때마다 다시 읽으므로
+        /// (<see cref="RunProcessAsync"/> 첫머리) VMS 재시작은 필요 없다 — 사용자 매뉴얼 10.2 와 같은 안내.
+        /// </summary>
+        internal const string MissingStartNodeMessage =
+            "시퀀스에 Start 노드가 없어 자동 운전을 시작할 수 없습니다. " +
+            "VisionSetup 의 시퀀스 편집기에서 시퀀스를 만들고 [저장] 하세요 — 저장 후 다음 AUTO RUN 부터 자동으로 읽힙니다.";
+
+        /// <summary>
         /// Run the unified process sequence using a single SequenceEngine.
         /// Uses custom SequenceConfig if available, otherwise generates default from PlcSignalConfiguration.
         /// </summary>
@@ -402,10 +410,7 @@ namespace VMS.Services
             // 시작 전에 한 번 검증하고 원인을 남긴 뒤 중단.
             if (!config.Nodes.Any(n => n.NodeType == SequenceNodeType.Start))
             {
-                _logService?.Log(
-                    "시퀀스에 Start 노드가 없어 자동 운전을 시작할 수 없습니다. " +
-                    "VisionSetup 의 시퀀스 편집기에서 시퀀스를 만들고 저장한 뒤 VMS 를 다시 시작하세요.",
-                    LogLevel.Error, "AutoProcess");
+                _logService?.Log(MissingStartNodeMessage, LogLevel.Error, "AutoProcess");
                 SetAllCameraStates(AutoProcessState.Error);
                 return;
             }

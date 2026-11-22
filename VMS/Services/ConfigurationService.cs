@@ -63,6 +63,7 @@ namespace VMS.Services
         /// </summary>
         public SystemConfiguration LoadSystemConfiguration()
         {
+            LastSystemConfigLoadError = null;
             try
             {
                 if (File.Exists(_systemConfigPath))
@@ -75,10 +76,18 @@ namespace VMS.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading system config: {ex.Message}");
+                LastSystemConfigLoadError = ex.Message;
             }
 
             return new SystemConfiguration();
         }
+
+        /// <summary>
+        /// 마지막 <see cref="LoadSystemConfiguration"/> 의 읽기 실패 원인 — 성공·파일 없음이면 null.
+        /// 실패하면 기본 설정(Web 주소 없음 = 단독 모드, 기본 카메라)으로 뜨므로 App 이 시작할 때 알린다.
+        /// 값 하나(예: 카메라 제조사 철자)만 틀려도 파일 전체가 기본값으로 바뀐다.
+        /// </summary>
+        public string? LastSystemConfigLoadError { get; private set; }
 
         /// <summary>
         /// Load camera layout configuration
