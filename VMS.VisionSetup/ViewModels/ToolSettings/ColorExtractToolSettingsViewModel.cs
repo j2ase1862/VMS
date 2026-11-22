@@ -19,6 +19,9 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
             TrainSelectedModelCommand = new RelayCommand(TrainSelectedModel);
             AddModelCommand = new RelayCommand(AddModel);
             RemoveModelCommand = new RelayCommand(RemoveModel, () => Models.Count > 1 && SelectedModel != null);
+            // 이미지에서 대상 색을 한 번 클릭해 선택 모델의 H/S/V 범위를 채운다 (Color Match 와 같은 경로)
+            PickColorCommand = new RelayCommand(() =>
+                WeakReferenceMessenger.Default.Send(new RequestPickColorMessage()));
 
             DrawSearchRegionCommand = new RelayCommand(() =>
                 WeakReferenceMessenger.Default.Send(new RequestDrawSearchRegionMessage()));
@@ -66,6 +69,7 @@ namespace VMS.VisionSetup.ViewModels.ToolSettings
         public int SearchRegionHeight { get => TypedTool.SearchRegionHeight; set => TypedTool.SearchRegionHeight = value; }
 
         public IRelayCommand TrainSelectedModelCommand { get; }
+        public IRelayCommand PickColorCommand { get; }
         public IRelayCommand AddModelCommand { get; }
         public IRelayCommand RemoveModelCommand { get; }
         public IRelayCommand DrawSearchRegionCommand { get; }

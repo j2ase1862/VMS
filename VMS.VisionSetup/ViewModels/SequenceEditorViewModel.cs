@@ -678,7 +678,10 @@ namespace VMS.VisionSetup.ViewModels
             AddEdge(repeatCfg.Id, recipeChangeCfg.Id, "Repeat");
 
             SequenceName = "Process Sequence";
-            StatusMessage = string.IsNullOrWhiteSpace(ResetSignalAddress)
+            // Reset 신호 칸은 PLC 연동 옵션이 있을 때만 보인다 — 없는 구성에서는 그 칸을 가리키지 않는다
+            StatusMessage = !IsPlcEnabled
+                ? $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대)"
+                : string.IsNullOrWhiteSpace(ResetSignalAddress)
                 ? $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대) — Reset 신호 주소를 상단 툴바에서 설정하세요."
                 : $"디폴트 프로세스 시퀀스가 생성되었습니다. (카메라 {AvailableCameraIds.Count}대, Reset: {ResetSignalAddress})";
         }

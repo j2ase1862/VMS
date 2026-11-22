@@ -54,13 +54,27 @@
                             </Style>
                         </ComboBox.Style>
                     </ComboBox>
-                    <TextBlock Foreground="#666" FontSize="10" FontStyle="Italic">
+                    <!-- 모델에 클래스 정보(메타데이터)가 없을 때만 — 쉼표로 직접 입력 (매뉴얼 §6.11) -->
+                    <TextBox Text="{Binding ClassNamesText, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,4"
+                             ToolTip="클래스 이름을 모델의 클래스 순서대로 쉼표로 구분해 입력합니다. 예: good, scratch, dent">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource SettingTextBoxStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ModelClassNames.Count, FallbackValue=0}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <TextBlock Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ModelClassNames.Count, FallbackValue=0}" Value="0">
-                                        <Setter Property="Text" Value="모델을 선택하면 클래스가 자동으로 로드됩니다."/>
+                                        <Setter Property="Text" Value="모델을 선택하면 클래스가 자동으로 로드됩니다. 모델에 클래스 정보가 없으면 위 칸에 쉼표로 구분해 입력하세요."/>
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>

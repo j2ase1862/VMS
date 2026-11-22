@@ -337,7 +337,7 @@ namespace VMS.VisionSetup
                 _connectionSourceTool = sourceTool;
 
                 // 안내 텍스트 표시
-                ConnectionModeHint.Text = $"[{_pendingConnectionType}] 연결 모드: 대상 도구를 클릭하세요 (ESC로 취소)";
+                ConnectionModeHint.Text = $"[{_pendingConnectionType}] 연결 모드: 대상 도구를 클릭하세요 (ESC 또는 우클릭으로 취소)";
                 ConnectionModeHint.Visibility = Visibility.Visible;
 
                 // ESC 키 핸들러 등록
@@ -345,6 +345,9 @@ namespace VMS.VisionSetup
 
                 // 마우스 이벤트 (임시 연결선 그리기)
                 WorkspaceZoomHost.MouseMove += ConnectionMode_MouseMove;
+
+                // 빈 곳 우클릭으로도 취소 (도구 위 우클릭은 Item_MouseRightButtonDown 이 먼저 처리)
+                WorkspaceZoomHost.MouseRightButtonDown += ConnectionMode_MouseRightButtonDown;
             }
         }
 
@@ -465,6 +468,15 @@ namespace VMS.VisionSetup
         }
 
         /// <summary>
+        /// 연결 모드에서 작업 공간 빈 곳 우클릭 - 연결 모드 취소
+        /// </summary>
+        private void ConnectionMode_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            CancelConnectionMode();
+            e.Handled = true;
+        }
+
+        /// <summary>
         /// 연결 모드 취소 및 정리
         /// </summary>
         private void CancelConnectionMode()
@@ -477,6 +489,7 @@ namespace VMS.VisionSetup
 
             this.KeyDown -= ConnectionMode_KeyDown;
             WorkspaceZoomHost.MouseMove -= ConnectionMode_MouseMove;
+            WorkspaceZoomHost.MouseRightButtonDown -= ConnectionMode_MouseRightButtonDown;
         }
 
         /// <summary>

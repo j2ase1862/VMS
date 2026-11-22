@@ -240,6 +240,35 @@ namespace VMS.VisionSetup.VisionTools.Color
             }
         }
 
+        /// <summary>
+        /// SelectedModel 을 이미지의 한 픽셀 색으로 채운다 — 그 색의 HSV 를 가운데에 두고
+        /// 영역 학습의 최소 폭(H ±5 · S ±20 · V ±20)을 준다. 허용 폭은 이후 Hue/Saturation/Value 칸에서 넓힌다.
+        /// </summary>
+        public bool PickFromPixel(byte b, byte g, byte r)
+        {
+            if (SelectedModel == null) return false;
+            try
+            {
+                using var bgrMat = new Mat(1, 1, MatType.CV_8UC3, new Scalar(b, g, r));
+                using var hsvMat = new Mat();
+                Cv2.CvtColor(bgrMat, hsvMat, ColorConversionCodes.BGR2HSV);
+                var p = hsvMat.Get<Vec3b>(0, 0);
+
+                const int hSpread = 5, sSpread = 20, vSpread = 20;
+                SelectedModel.HueMin = ((p.Item0 - hSpread) % 180 + 180) % 180;
+                SelectedModel.HueMax = ((p.Item0 + hSpread) % 180 + 180) % 180;
+                SelectedModel.SaturationMin = Math.Clamp(p.Item1 - sSpread, 0, 255);
+                SelectedModel.SaturationMax = Math.Clamp(p.Item1 + sSpread, 0, 255);
+                SelectedModel.ValueMin = Math.Clamp(p.Item2 - vSpread, 0, 255);
+                SelectedModel.ValueMax = Math.Clamp(p.Item2 + vSpread, 0, 255);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public override VisionResult Execute(Mat inputImage)
         {
             var result = new VisionResult();

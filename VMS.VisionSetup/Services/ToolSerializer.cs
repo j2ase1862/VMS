@@ -1683,6 +1683,8 @@ namespace VMS.VisionSetup.Services
                 tool.Direction = dir;
             if (p.TryGetValue("OutputWidth", out var ow)) tool.OutputWidth = GetInt(ow);
             if (p.TryGetValue("OutputHeight", out var oh)) tool.OutputHeight = GetInt(oh);
+            // 레시피의 반지름은 직접 넣은 값으로 본다 — Circle Fit 연결 시 자동 설정 대상에서 뺀다.
+            tool.MarkRadiiExplicit();
             return tool;
         }
 
