@@ -69,12 +69,13 @@
       <Dialog Id="WebOptionDlg" Width="370" Height="270" Title="[ProductName] 설치">
         <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
                  TabSkip="no" Text="WixUI_Bmp_Banner" />
-        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15"
+        <!-- 머리 글은 배너 오른쪽 로고(약 X=255 부터) 앞에서 끝나야 한다 — 넘치면 로고와 겹친다. -->
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="230" Height="15"
                  Transparent="yes" NoPrefix="yes"
                  Text="{\WixUI_Font_Title}설치 구성 선택" />
-        <Control Id="Description" Type="Text" X="25" Y="23" Width="320" Height="15"
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="220" Height="15"
                  Transparent="yes" NoPrefix="yes"
-                 Text="함께 설치할 선택 구성 요소를 고르세요. (검사 프로그램은 항상 설치됩니다)" />
+                 Text="함께 설치할 구성 요소를 고르세요." />
         <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 
         <Control Id="WebCheck" Type="CheckBox" X="25" Y="70" Width="330" Height="17"
@@ -86,6 +87,8 @@
              업그레이드는 이전 구성을 따른다(Package.wxs INSTALLWEB 결정). 화면 문구는 그 사실대로. -->
         <Control Id="WebDesc2" Type="Text" X="40" Y="126" Width="315" Height="34" NoPrefix="yes"
                  Text="체크를 해제하면 웹 서버 파일이 설치되지 않으며, 업데이트해도 그 구성이 유지됩니다. 나중에 웹 서버를 넣으려면 프로그램을 제거한 뒤 다시 설치하면서 체크하세요." />
+        <Control Id="WebDesc3" Type="Text" X="25" Y="170" Width="330" Height="15" NoPrefix="yes"
+                 Text="검사 프로그램은 이 선택과 관계없이 항상 설치됩니다." />
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
