@@ -27,6 +27,7 @@
         <converters:PageToVisibilityConverter x:Key="PageConverter"/>
         <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:CameraManufacturerDisplayConverter x:Key="CameraManufacturerDisplayConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Button / TextBox / ComboBox 는 WindowStyles 의 Modern* / WindowDark* 키
@@ -580,7 +581,14 @@
                                                               Width="110" Margin="0,0,10,0"
                                                               VerticalAlignment="Center"
                                                               Style="{StaticResource WindowDarkComboBox}"
-                                                              ToolTip="카메라 제조사입니다. 선택에 따라 연결에 사용할 드라이버(SDK)가 결정됩니다."/>
+                                                              ToolTip="카메라 제조사입니다. 선택에 따라 연결에 사용할 드라이버(SDK)가 결정됩니다.">
+                                                        <!-- 표시만 밑줄 없는 이름("Mech-Mind", "Allied Vision") — 선택 값 · 저장 값은 열거형 이름 그대로 -->
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Converter={StaticResource CameraManufacturerDisplayConverter}}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
 
                                                     <!-- Remove Button -->
                                                     <Button Grid.Column="4" Content="✕"

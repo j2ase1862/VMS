@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using VMS.Camera.Models;
 
 namespace VMS.AppSetup.Converters
 {
@@ -52,6 +53,25 @@ namespace VMS.AppSetup.Converters
             }
             return Binding.DoNothing;
         }
+    }
+
+    /// <summary>
+    /// 카메라 제조사 열거형 → 화면 표시 이름("Mech_Mind" → "Mech-Mind", "Allied_Vision" → "Allied Vision").
+    /// VisionSetup Camera Manager 와 같은 <see cref="CameraManufacturerNames"/> 를 쓴다.
+    /// 표시 전용 — 콤보의 SelectedItem 은 열거형 값 그대로라 설정 파일 저장 값은 바뀌지 않는다.
+    /// </summary>
+    public class CameraManufacturerDisplayConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value switch
+            {
+                CameraManufacturer m => CameraManufacturerNames.ToDisplayName(m),
+                null => string.Empty,
+                _ => CameraManufacturerNames.ToDisplayName(value.ToString())
+            };
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => Binding.DoNothing;
     }
 
     /// <summary>

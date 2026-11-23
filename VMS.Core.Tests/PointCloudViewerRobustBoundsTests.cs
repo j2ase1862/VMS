@@ -78,5 +78,39 @@ namespace VMS.Core.Tests
 
             Assert.True(max.Y - min.Y > 0f, "평면 축이 퇴화됨 (박스 접힘)");
         }
+
+        [Fact]
+        public void TickIntervals_keeps_five_intervals_for_tall_data()
+        {
+            // 높이가 충분한 데이터(정육면체에 가까운 부품) — 종전과 같은 5칸(눈금 6개)
+            var min = new Vector3(0, -300, 0);
+            var max = new Vector3(300, 0, 300);
+            float spacing = PointCloudViewer.TickMinSpacing(min, max);
+            Assert.Equal(5, PointCloudViewer.TickIntervals(max.Y - min.Y, spacing, 5));
+        }
+
+        [Fact]
+        public void TickIntervals_reduces_ticks_for_flat_data()
+        {
+            // 현장 마스크 크롭처럼 가로 약 900mm · 높이 30mm — 6개 눈금이 한곳에 몰리던 경우 → 1칸(위 · 아래 두 값)
+            var min = new Vector3(1118.8f, -30, 69);
+            var max = new Vector3(2022f, 0, 959);
+            float spacing = PointCloudViewer.TickMinSpacing(min, max);
+            int n = PointCloudViewer.TickIntervals(max.Y - min.Y, spacing, 5);
+            Assert.Equal(1, n);
+        }
+
+        [Theory]
+        [InlineData(100f, 10f, 5, 5)]   // 칸 10 · 범위 100 → 최대 5칸
+        [InlineData(35f, 10f, 5, 3)]    // 3칸이면 칸 11.7 ≥ 10
+        [InlineData(5f, 10f, 5, 1)]     // 범위가 최소 간격보다 작음 → 1칸
+        [InlineData(0f, 10f, 5, 1)]     // 퇴화 — 0 으로 나누지 않음
+        public void TickIntervals_never_spaces_ticks_below_minimum(float range, float minSpacing, int max, int expected)
+        {
+            int n = PointCloudViewer.TickIntervals(range, minSpacing, max);
+            Assert.Equal(expected, n);
+            if (range >= minSpacing)
+                Assert.True(range / n >= minSpacing - 1e-4f);
+        }
     }
 }
