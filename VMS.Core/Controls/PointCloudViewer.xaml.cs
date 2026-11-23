@@ -313,32 +313,76 @@ namespace VMS.Core.Controls
             float floorGap = MathF.Max((max - min).Length() * 0.015f, 2f);
             float floorY = max.Y + floorGap;
 
+            // 눈금 글자 겹침 방지 (2026-11-23)
+            // ① 축 범위가 데이터 크기보다 훨씬 작으면(납작한 부품 · 마스크 크롭 · 가는 막대) 6개 눈금이 화면의
+            //    한 점에 몰린다 — 눈금 사이가 최소 간격보다 좁아지지 않게 칸 수를 줄인다(충분히 길면 종전대로 5칸).
+            // ② 박스 모서리에서 두 축의 끝 눈금이 같은 자리에 모인다 — 화면 기준 정렬로 서로 반대쪽에 붙인다
+            //    (Left/Right = 기준점의 왼쪽/오른쪽, Top/Bottom = 위/아래). 기본 시점에서
+            //    · (min.X, max.Z) 모서리: X 첫 눈금 = 왼쪽(박스 안쪽), Z 눈금 = 오른쪽(박스 바깥)
+            //    · (max.X, max.Z) 모서리: X 끝 눈금 = 오른쪽, Y 끝 눈금 = 왼쪽 위
+            // ③ 범위가 최소 간격보다도 작은 축은 두 끝 값을 위 · 아래로 갈라 붙인다. 이때 X 는 두 모서리가 한 점이
+            //    되어 끝 값이 Z 눈금 자리와 겹치므로 첫 값만 둔다.
+            float tickMinSpacing = TickMinSpacing(min, max);
+            float xRange = max.X - min.X, yRange = max.Z - min.Z, zRange = max.Y - min.Y;
+            bool xTiny = xRange < tickMinSpacing, yTiny = yRange < tickMinSpacing, zTiny = zRange < tickMinSpacing;
+
             // X 눈금 — 앞쪽 바닥 모서리(z = max.Z)를 따라, 실좌표 위치에 배치
-            for (int i = 0; i <= tickCount; i++)
+            int xIntervals = TickIntervals(xRange, tickMinSpacing, tickCount);
+            for (int i = 0; i <= xIntervals; i++)
             {
-                float x = min.X + (max.X - min.X) * i / tickCount;
-                tickText.TextInfo.Add(new TextInfo(
+                if (xTiny && i > 0) break;
+                float x = min.X + xRange * i / xIntervals;
+                var info = new TextInfo(
                     x.ToString("F1"), new Vector3(x, floorY, max.Z + margin))
-                { Foreground = tickColor, Scale = 0.6f });
+                { Foreground = tickColor, Scale = 0.6f };
+                if (i == 0)
+                {
+                    info.HorizontalAlignment = BillboardHorizontalAlignment.Left;
+                    if (xTiny) info.VerticalAlignment = BillboardVerticalAlignment.Bottom;
+                }
+                else if (i == xIntervals) info.HorizontalAlignment = BillboardHorizontalAlignment.Right;
+                tickText.TextInfo.Add(info);
             }
 
             // Y(데이터) 눈금 — 오른쪽 바닥 모서리(x = max.X)를 따라 (viewport Z = 데이터 Y)
-            for (int i = 0; i <= tickCount; i++)
+            int yIntervals = TickIntervals(yRange, tickMinSpacing, tickCount);
+            for (int i = 0; i <= yIntervals; i++)
             {
-                float z = min.Z + (max.Z - min.Z) * i / tickCount;
-                tickText.TextInfo.Add(new TextInfo(
+                float z = min.Z + yRange * i / yIntervals;
+                var info = new TextInfo(
                     z.ToString("F1"), new Vector3(max.X + margin, floorY, z))
-                { Foreground = tickColor, Scale = 0.6f });
+                { Foreground = tickColor, Scale = 0.6f };
+                if (i == yIntervals)
+                {
+                    info.HorizontalAlignment = BillboardHorizontalAlignment.Left;
+                    info.VerticalAlignment = BillboardVerticalAlignment.Top;
+                }
+                else if (i == 0 && yTiny)
+                {
+                    info.HorizontalAlignment = BillboardHorizontalAlignment.Left;
+                    info.VerticalAlignment = BillboardVerticalAlignment.Bottom;
+                }
+                tickText.TextInfo.Add(info);
             }
 
-            // Z(높이) 눈금 — 왼쪽 앞 수직 모서리를 따라. viewport Y = dataZ - zMax
-            for (int i = 0; i <= tickCount; i++)
+            // Z(높이) 눈금 — (min.X, max.Z) 수직 모서리를 따라, 글자는 오른쪽. viewport Y = dataZ - zMax
+            // 기준점은 모서리에서 -X · +Z 양쪽으로 여백만큼 밖 — X 첫 눈금 기준점(+Z 쪽)보다 화면 오른쪽에 오게.
+            int zIntervals = TickIntervals(zRange, tickMinSpacing, tickCount);
+            for (int i = 0; i <= zIntervals; i++)
             {
-                float viewportY = min.Y + (max.Y - min.Y) * i / tickCount;
+                float viewportY = min.Y + zRange * i / zIntervals;
                 float dataZ = viewportY + _dataZMax;
-                tickText.TextInfo.Add(new TextInfo(
-                    dataZ.ToString("F1"), new Vector3(min.X - margin, viewportY, max.Z))
-                { Foreground = tickColor, Scale = 0.6f });
+                var info = new TextInfo(
+                    dataZ.ToString("F1"), new Vector3(min.X - margin, viewportY, max.Z + margin))
+                { Foreground = tickColor, Scale = 0.6f, HorizontalAlignment = BillboardHorizontalAlignment.Right };
+                // 화면 위쪽 = viewport -Y — 위 끝 값(i = 0)은 위로, 아래 끝 값은 아래로
+                if (zTiny)
+                {
+                    info.VerticalAlignment = i == 0
+                        ? BillboardVerticalAlignment.Top
+                        : BillboardVerticalAlignment.Bottom;
+                }
+                tickText.TextInfo.Add(info);
             }
 
             GridTickLabels.Geometry = tickText;
@@ -432,6 +476,26 @@ namespace VMS.Core.Controls
             return nice * pow;
         }
 
+        /// <summary>
+        /// 축 눈금 사이의 최소 간격(mm) — 데이터 박스 대각선의 5%.
+        /// 화면 맞춤 시점(대각선의 약 1.3배 거리, 시야 45°)에서 뷰 높이의 약 4% 안팎 — 고정 크기 눈금 글자
+        /// 높이보다 넉넉해 이 간격 이상이면 이웃 눈금 숫자가 겹치지 않는다.
+        /// </summary>
+        public static float TickMinSpacing(Vector3 min, Vector3 max)
+            => MathF.Max((max - min).Length() * 0.05f, 1f);
+
+        /// <summary>
+        /// 축 범위 <paramref name="range"/> 를 몇 칸으로 나눌지 — 칸이 <paramref name="minSpacing"/> 보다
+        /// 좁아지지 않는 가장 큰 수(1 ~ <paramref name="maxIntervals"/>). 범위가 충분하면 종전과 같은 칸 수.
+        /// </summary>
+        public static int TickIntervals(float range, float minSpacing, int maxIntervals)
+        {
+            if (maxIntervals < 1) return 1;
+            if (!(range > 0f) || !(minSpacing > 0f)) return 1;
+            int n = (int)MathF.Floor(range / minSpacing);
+            return Math.Clamp(n, 1, maxIntervals);
+        }
+
         /// <summary>데이터 바운딩 박스 와이어프레임 (12 모서리). 바닥은 floorY(그리드 면)까지.</summary>
         private void BuildBoundsBox(Vector3 min, Vector3 max, float floorY)
         {
@@ -480,8 +544,10 @@ namespace VMS.Core.Controls
                 new Vector3((min.X + max.X) * 0.5f, floorY, max.Z + margin * 2.2f), AxisColorX);
             BuildAxisLabel(AxisLabelZ, "Y(mm)",
                 new Vector3(max.X + margin * 2.2f, floorY, (min.Z + max.Z) * 0.5f), AxisColorY);
+            // Z(mm) 은 높이 모서리 옆(중간 높이)이 아니라 맨 위 눈금 위쪽에 — 옆에 두면 납작한 데이터에서
+            // 눈금 숫자와 같은 자리에 겹친다. 화면 위쪽 = viewport -Y, 맨 위 눈금에서 최소 눈금 간격만큼 위.
             BuildAxisLabel(AxisLabelY, "Z(mm)",
-                new Vector3(min.X - margin * 2.2f, (min.Y + max.Y) * 0.5f, max.Z), AxisColorZ);
+                new Vector3(min.X - margin, min.Y - TickMinSpacing(min, max), max.Z + margin), AxisColorZ);
         }
 
         #endregion
