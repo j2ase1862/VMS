@@ -2,8 +2,9 @@
 <h2>9. ◆AI 학습 플랫폼 (BODA.VMS.MLOps)</h2>
 <div class="callout"><strong>◆ 확장 옵션 · 이 장은 요약입니다.</strong> MLOps 의 화면별 사용법과 개념(처음 쓰는 분용)은 별책 「BODA VMS MLOps 사용자 매뉴얼」에 있습니다. 아래 링크는 같은 폴더의 MLOps 매뉴얼 해당 절로 이어집니다. 여기에는 라인 PC(VMS) 쪽에서 알아야 할 것만 남겼습니다.</div>
 <p>MLOps 는 딥러닝 검사 도구가 쓰는 모델(ONNX)을 만들고 라인에 배포하는 웹 서버입니다(기본 포트 5310). 라인 PC 와는 두 방향으로 이어집니다 — 불량 사진을 올리고(수집), 레시피가 가리키는 모델을 레시피를 불러올 때 받아 갑니다(배포). 설치는 §2.4 입니다.</p>
+<div class="callout warn">라인 PC 의 보안 모드가 <strong>Production</strong> 이면 다른 PC 에 있는 MLOps 서버를 <code>http://</code> 주소로 쓸 수 없습니다 — 모델 내려받기와 NG 사진 전송이 모두 꺼지고 VMS 상태바에 "MLOps 비활성" 칩이 뜹니다(칩에 마우스를 올리면 사유, §4.7). 같은 PC 의 서버(<code>http://localhost:5310</code>)는 Production 에서도 됩니다. 다른 PC 의 서버는 <code>https://</code> 주소로 접속할 수 있게 구성하거나, 라인 PC 의 보안 모드를 Development 로 둡니다(§3.8).</div>
 <h3 id="mlops-login" data-video="M-01">9.1 로그인과 역할</h3>
-<p>Web 의 아이디 · 비밀번호로 들어오고, MLOps 안의 역할(Viewer · Labeler · Engineer · Admin)은 관리자가 [사용자 역할] 에서 붙입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-login">접속과 로그인</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-roles">역할과 권한</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-members">사용자 역할 지정</a></p>
+<p>운영 웹과 연결해 설치한 서버는 Web 의 아이디 · 비밀번호로 들어옵니다(계정을 따로 만들지 않음). MLOps 안의 역할(Viewer · Labeler · Engineer · Admin)은 Web 의 Admin 계정이면 Admin 이고, 그 밖의 계정은 관리자가 [사용자 역할] 에서 붙입니다 — 역할을 받지 않은 계정은 서버의 기본 역할(설치 기본값 Viewer)로 들어옵니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-login">접속과 로그인</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-roles">역할과 권한</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-members">사용자 역할 지정</a></p>
 <h3 id="mlops-nav" data-video="M-02">9.2 메뉴 구조</h3>
 <p>왼쪽 메뉴는 데이터 · 학습 · 배포 세 묶음입니다. 대시보드에 워커 · 모니터링 경고가 뜹니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-dashboard">화면 구성과 대시보드</a></p>
 <h3 id="mlops-workflow" data-video="M-C2">9.3 전체 흐름 — 수집에서 배포까지</h3>
@@ -23,7 +24,7 @@
 <h3 id="mlops-bindings" data-video="V-5-31">9.10 레시피 바인딩</h3>
 <p>라인 PC 는 레시피에 저장된 <code>model://</code> 참조를 따릅니다. 참조는 VisionSetup 딥러닝 도구의 [레지스트리…](§5.13)에서 넣고, 라인의 VMS 는 레시피를 불러올 때 그 모델을 내려받아 둡니다(서버가 꺼져 있어도 받아 둔 모델을 씀). MLOps 의 [레시피 바인딩] 은 어떤 모델을 어느 레시피에 걸었는지 남기는 <strong>기록</strong>입니다 — 라인에 반영되는 것은 VisionSetup 에서 지정한 모델이며, 바인딩을 되돌려도(롤백) 기록만 바뀌고 라인 레시피는 그대로입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding">라인에 모델 걸기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-binding-screen">[레시피 바인딩] 화면</a></p>
 <h3 id="mlops-lines" data-video="M-28">9.11 라인 PC</h3>
-<p>라인 PC 마다 계정을 만들어 라인 토큰(ln_…)을 받고, 설정 마법사 고급 설정(§3.3)에 넣습니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-line-pc">라인 PC 계정</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-vms-fetch">모델을 받아 가는 길</a></p>
+<p>라인 PC 마다 계정을 만들어 라인 토큰(ln_…)을 받고, 설정 마법사 고급 설정(§3.3)에 넣습니다. [라인 PC] 메뉴는 Engineer · Admin 에게만 보입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-line-pc">라인 PC 계정</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-vms-fetch">모델을 받아 가는 길</a></p>
 <h3 id="mlops-monitoring" data-video="M-29">9.12 라인 모니터링</h3>
 <p>운영 웹의 검사 이력을 모델 버전별로 모아 불량률 · 신뢰도 · 입력 변화를 봅니다. VMS 가 결과에 모델 식별자를 실어 보냅니다. 결과가 쌓이려면 라인이 운영 Web 과 연동된 채 <code>model://</code> 참조 레시피로 검사해야 하며, 그런 이력이 없으면 "아직 이어진 검사 결과가 없습니다" 만 보입니다. → MLOps 매뉴얼: <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-monitor">신호 읽기</a> · <a class="book" href="BODA_VMS_MLOps_사용자매뉴얼_v2.0.html#s-retrain">재학습</a></p>
 </section>
