@@ -1158,19 +1158,19 @@ namespace VMS.AppSetup.ViewModels
                     LocalFallbackAdminPassword = string.Empty;
                 }
 
-                var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}";
-                if (seededAdmin)
-                    msg += "\n\n✓ admin 계정 생성 완료.";
-                else if (adminAlreadyExists)
-                    msg += "\n\n⚠ admin 계정이 이미 존재하여 입력한 비밀번호는 적용되지 않았습니다." +
-                           "\n   비밀번호 변경은 VMS 로그인 후 [사용자 관리]에서," +
-                           "\n   Web 연동(SSO) 환경에서는 Web 관리 화면에서 하세요.";
-                else if (adminInputGiven)
-                    msg += "\n\n⚠ admin 비밀번호가 8자 미만이라 계정이 생성되지 않았습니다.";
-                if (updatedLocalAdmin)
-                    msg += "\n✓ local-admin 비밀번호 변경 완료.";
-                else if (localInputGiven)
-                    msg += "\n⚠ local-admin 비밀번호가 8자 미만이라 변경되지 않았습니다.";
+                // 비밀번호를 비워 둔 채 저장했는데 admin 계정이 아직 없으면(신규 설치) 알려 준다 —
+                // 매뉴얼 3.3 "신규 설치 시 필수". 종전에는 아무 안내 없이 admin 없는 상태로 끝났다.
+                // 조회만 하며(DB 파일이 없으면 만들지 않음), 실패해도 저장 완료 안내는 그대로 낸다.
+                var adminMissingWithoutInput = false;
+                if (!WebSsoEnabled && !adminInputGiven)
+                {
+                    try { adminMissingWithoutInput = !Services.InitialAdminSeeder.AdminExists(); }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Setup] admin 계정 확인 실패: {ex.Message}"); }
+                }
+
+                var msg = $"설정이 저장되었습니다.\n\n저장 위치: {_configService.ConfigFilePath}"
+                          + DescribeAdminSeedOutcome(seededAdmin, adminAlreadyExists, adminInputGiven,
+                                                     adminMissingWithoutInput, updatedLocalAdmin, localInputGiven);
 
                 _dialogService.ShowInformation(msg, "Setup Complete");
 
@@ -1183,6 +1183,33 @@ namespace VMS.AppSetup.ViewModels
                     "설정 저장에 실패했습니다.",
                     "Error");
             }
+        }
+
+        /// <summary>
+        /// 저장 완료 창에 붙이는 관리자 계정 처리 결과. 해당 사항이 없으면 빈 문자열.
+        /// </summary>
+        /// <param name="adminMissingWithoutInput">VMS Admin 비밀번호를 비워 뒀고 admin 계정도 아직 없음(신규 설치)</param>
+        internal static string DescribeAdminSeedOutcome(
+            bool seededAdmin, bool adminAlreadyExists, bool adminInputGiven,
+            bool adminMissingWithoutInput, bool updatedLocalAdmin, bool localInputGiven)
+        {
+            var msg = string.Empty;
+            if (seededAdmin)
+                msg += "\n\n✓ admin 계정 생성 완료.";
+            else if (adminAlreadyExists)
+                msg += "\n\n⚠ admin 계정이 이미 존재하여 입력한 비밀번호는 적용되지 않았습니다." +
+                       "\n   비밀번호 변경은 VMS 로그인 후 [사용자 관리]에서," +
+                       "\n   Web 연동(SSO) 환경에서는 Web 관리 화면에서 하세요.";
+            else if (adminInputGiven)
+                msg += "\n\n⚠ admin 비밀번호가 8자 미만이라 계정이 생성되지 않았습니다.";
+            else if (adminMissingWithoutInput)
+                msg += "\n\n⚠ VMS Admin 비밀번호를 입력하지 않아 admin 계정이 아직 없습니다." +
+                       "\n   설정 마법사를 다시 실행해 2 단계에서 8자 이상 비밀번호를 입력하세요.";
+            if (updatedLocalAdmin)
+                msg += "\n✓ local-admin 비밀번호 변경 완료.";
+            else if (localInputGiven)
+                msg += "\n⚠ local-admin 비밀번호가 8자 미만이라 변경되지 않았습니다.";
+            return msg;
         }
     }
 }

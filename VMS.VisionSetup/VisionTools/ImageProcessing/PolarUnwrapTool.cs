@@ -42,14 +42,46 @@ namespace VMS.VisionSetup.VisionTools.ImageProcessing
         public double InnerRadius
         {
             get => _innerRadius;
-            set => SetProperty(ref _innerRadius, Math.Max(0, value));
+            set
+            {
+                _radiiUntouched = false;
+                SetProperty(ref _innerRadius, Math.Max(0, value));
+            }
         }
 
         private double _outerRadius = 200;
         public double OuterRadius
         {
             get => _outerRadius;
-            set => SetProperty(ref _outerRadius, Math.Max(1, value));
+            set
+            {
+                _radiiUntouched = false;
+                SetProperty(ref _outerRadius, Math.Max(1, value));
+            }
+        }
+
+        // 반지름을 아직 아무도 넣지 않았는가 — 팔레트에서 새로 놓은 도구만 true 다.
+        // 화면 입력 · 도넛 ROI · 레시피 불러오기 · 복제는 모두 false 로 만든다(레시피에 저장하지 않는 값).
+        private bool _radiiUntouched = true;
+
+        /// <summary>
+        /// 반지름이 새 도구의 기본값 그대로라, 연결된 Circle Fit 의 반지름으로 자동 설정될 수 있는 상태인가.
+        /// </summary>
+        internal bool AutoRadiusPending => _radiiUntouched;
+
+        /// <summary>레시피에서 불러온 도구의 반지름은 직접 넣은 값으로 본다 — 자동 설정하지 않는다.</summary>
+        internal void MarkRadiiExplicit() => _radiiUntouched = false;
+
+        /// <summary>
+        /// 연결된 Circle Fit 의 반지름으로 Inner(0.6 배) · Outer(1.1 배)를 한 번 채운다.
+        /// 반지름을 직접 넣었거나 레시피에서 불러온 도구는 건드리지 않는다. 채웠으면 true.
+        /// </summary>
+        internal bool TryApplyAutoRadii(double circleRadius)
+        {
+            if (!_radiiUntouched || !(circleRadius > 0) || double.IsInfinity(circleRadius)) return false;
+            InnerRadius = Math.Max(0, circleRadius * 0.6);
+            OuterRadius = circleRadius * 1.1;
+            return true;
         }
 
         private double _startAngleDeg;

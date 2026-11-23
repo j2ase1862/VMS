@@ -214,7 +214,7 @@ namespace VMS.VisionSetup.ViewModels
                 if (info != null)
                 {
                     var name = string.IsNullOrWhiteSpace(info.Name) ? "(unnamed)" : info.Name;
-                    var maker = string.IsNullOrWhiteSpace(info.Manufacturer) ? "" : $" · {info.Manufacturer}";
+                    var maker = string.IsNullOrWhiteSpace(info.Manufacturer) ? "" : $" · {info.ManufacturerDisplayName}";
                     return new CameraOption(id, $"{name}{maker}");
                 }
             }

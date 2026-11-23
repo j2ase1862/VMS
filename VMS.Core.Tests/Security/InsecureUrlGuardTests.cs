@@ -131,8 +131,16 @@ namespace VMS.Core.Tests.Security
                 SecurityOptions.Current = SecurityOptions.Production;
                 var ex = Assert.Throws<InvalidOperationException>(() =>
                     InsecureUrlGuard.Check("http://api.example.com", "MyService"));
-                // 운영자가 봤을 때 무엇을 고쳐야 하는지 알 수 있도록 가이드 포함.
-                Assert.Contains("securityMode", ex.Message);
+                // 운영자가 봤을 때 무엇을 고쳐야 하는지 알 수 있도록 가이드 포함 —
+                // 서버를 https 로 설치하고 https:// 주소를 넣으라는 안내여야 하고,
+                // 보안 모드를 낮추라고 권하지 않는다 (Development 는 시험 환경 전용임만 알린다).
+                Assert.Contains("https:// 로 시작하는 주소", ex.Message);
+                Assert.Contains("webServerUrl", ex.Message);
+                Assert.Contains("시험 환경 전용", ex.Message);
+                Assert.DoesNotContain("Development 로 변경", ex.Message);
+                // MlopsClientStatus.Describe 가 이 두 낱말로 차단 사유를 알아본다 — 빠지면 안 된다.
+                Assert.Contains("HTTPS", ex.Message);
+                Assert.Contains("Production", ex.Message);
             }
             finally { SecurityOptions.Current = original; }
         }

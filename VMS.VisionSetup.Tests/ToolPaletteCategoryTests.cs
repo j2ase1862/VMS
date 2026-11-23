@@ -105,6 +105,56 @@ namespace VMS.VisionSetup.Tests
             Assert.DoesNotContain(RecipeTemplateCatalog.Templates, t => t.Description.Contains("YOLO", StringComparison.OrdinalIgnoreCase));
         }
 
+        [Fact]
+        public void PaletteTooltip_CategoryCount_MatchesPalette()
+        {
+            // Tool Palette ⓘ 툴팁의 "(n 카테고리)" 는 손으로 적은 숫자다 — 팔레트가 15개로 늘었는데
+            // 툴팁은 12 로 남아 있었다(GS 매뉴얼 대조 2026-11-22). 카테고리를 더하면 여기서 걸린다.
+            var vm = CreateViewModel();
+            var xaml = System.IO.File.ReadAllText(System.IO.Path.Combine(VisionSetupDir(), "Views", "MainView.xaml"));
+
+            var match = System.Text.RegularExpressions.Regex.Match(xaml, @"비전 도구 팔레트입니다 \((\d+) 카테고리\)");
+            Assert.True(match.Success, "Tool Palette 툴팁에서 카테고리 수를 찾지 못했습니다.");
+            Assert.Equal(vm.ToolTree.Count, int.Parse(match.Groups[1].Value));
+        }
+
+        [Fact]
+        public void StepsGrid_OnlyResolutionColumnIsEditable()
+        {
+            // 매뉴얼 §5.3 · §5.9 · §7.2: Steps 표의 Resolution(mm/px)은 직접 입력할 수 있다.
+            // 표 전체가 읽기 전용이면 입력할 길이 없고, 표를 열어 두면 Delete 키로 스텝이 지워진다.
+            var xaml = System.IO.File.ReadAllText(System.IO.Path.Combine(VisionSetupDir(), "Views", "MainView.xaml"));
+            var start = xaml.IndexOf("<DataGrid Grid.Row=\"4\" ItemsSource=\"{Binding Steps}\"", StringComparison.Ordinal);
+            Assert.True(start >= 0, "Steps 표를 찾지 못했습니다.");
+            var grid = xaml.Substring(start, xaml.IndexOf("</DataGrid>", start, StringComparison.Ordinal) - start);
+            var gridTag = grid.Substring(0, grid.IndexOf('>'));
+
+            Assert.DoesNotContain("IsReadOnly=\"True\"", gridTag);
+            Assert.Contains("CanUserAddRows=\"False\"", gridTag);
+            Assert.Contains("CanUserDeleteRows=\"False\"", gridTag);
+
+            var columns = System.Text.RegularExpressions.Regex.Matches(grid, @"<DataGridTextColumn\s[^>]*>", System.Text.RegularExpressions.RegexOptions.Singleline)
+                .Select(m => m.Value).ToList();
+            Assert.Equal(3, columns.Count);
+            var resolution = Assert.Single(columns, c => c.Contains("Header=\"Resolution\""));
+            Assert.DoesNotContain("IsReadOnly=\"True\"", resolution);
+            Assert.Contains("{Binding Resolution, Mode=TwoWay", resolution);
+            Assert.All(columns.Where(c => c != resolution), c => Assert.Contains("IsReadOnly=\"True\"", c));
+        }
+
+        private static string VisionSetupDir()
+        {
+            var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
+            {
+                var candidate = System.IO.Path.Combine(dir.FullName, "VMS.VisionSetup");
+                if (System.IO.File.Exists(System.IO.Path.Combine(candidate, "VMS.VisionSetup.csproj")))
+                    return candidate;
+                dir = dir.Parent;
+            }
+            throw new System.IO.DirectoryNotFoundException("VMS.VisionSetup 소스 폴더를 찾지 못했습니다.");
+        }
+
         private static MainViewModel CreateViewModel()
         {
             return new MainViewModel(

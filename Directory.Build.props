@@ -10,7 +10,7 @@
   -->
   <PropertyGroup>
     <Version>1.48.1</Version>
-    <BuildRevision>4</BuildRevision>
+    <BuildRevision>5</BuildRevision>
     <AssemblyVersion>1.48.1.0</AssemblyVersion>
     <FileVersion>$(Version).$(BuildRevision)</FileVersion>
     <Company>BODA Vision AI</Company>

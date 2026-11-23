@@ -180,11 +180,11 @@
                 <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageConverter}, ConverterParameter=2}">
                   <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="500" VerticalAlignment="Top">
-                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Application Name"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Application Name" CustomDescription="이 장비(라인)를 부르는 이름입니다. VMS 화면 제목 등에 표시됩니다. 예: OP102." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Application Name"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Application Name" CustomDescription="이 검사기를 부르는 이름입니다. VMS 헤더 왼쪽과 Web 라인 목록에 표시됩니다. 예: OP102. 줄바꿈 · 탭 같은 특수 문자는 넣지 마세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                         <TextBox Text="{Binding ApplicationName, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,20"/>
 
-                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="System IP Address"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="System IP Address" CustomDescription="이 비전 PC 의 IP 주소입니다. 카메라 등 연결 장비와 같은 네트워크 대역이어야 합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                        <TextBlock Style="{StaticResource LabelStyle}"><Run Text="System IP Address"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="System IP Address" CustomDescription="이 PC 의 IP 주소입니다. Web 라인 목록에 참고용으로 표시됩니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                         <TextBox Text="{Binding SystemIpAddress, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource WindowDarkTextBox}"/>
 
@@ -204,13 +204,13 @@
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                                 <StackPanel IsEnabled="{Binding IsWebFieldsEnabled}">
-                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Client Index"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Client Index" CustomDescription="Web 서버가 이 장비를 구분하는 라인 번호입니다. 라인마다 1, 2, 3… 처럼 겹치지 않게 지정하세요." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Client Index"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Client Index" CustomDescription="Web 서버가 이 라인을 구분하는 번호(라인 번호)입니다. 0~99 만 저장되며 서버 안에서 겹치면 안 됩니다. 서버가 여러 대인 공장은 십의 자리를 서버 번호로 쓰는 규칙을 권장합니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding ClientIndex, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="BODA.VMS.Web에서 이 클라이언트를 식별하는 고유 번호입니다."
                                            Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,15"/>
 
-                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Server URL"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Server URL" CustomDescription="BODA.VMS.Web 관리 서버 주소입니다. 예: https://192.168.0.10:7144 — 검사 결과 업로드와 레시피 동기화에 사용됩니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                <TextBlock Style="{StaticResource LabelStyle}"><Run Text="Web Server URL"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="Web Server URL" CustomDescription="생산 관리 웹 주소입니다. 이 PC 안의 동봉 서버면 http://localhost:5292, 별도 서버면 http://서버IP:5292 (Production 모드에서는 https 필요). 검사 결과 업로드와 레시피 동기화에 사용됩니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                 <TextBox Text="{Binding WebServerUrl, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,5"/>
                                 <TextBlock Text="BODA.VMS.Web 서버 주소 (장비 상태 보고 · 레시피 파라미터 동기화)"
@@ -395,7 +395,7 @@
                                                Visibility="{Binding IsStartingWebServer, Converter={StaticResource BoolToVisConverter}}"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,10,0,0"
                                                Foreground="{StaticResource BrushTextMuted}">
-                                        admin 비밀번호 재설정은 Web 배포 폴더의 Reset-AdminPassword 도구를 사용하세요.
+                                        admin 비밀번호를 잊었으면 사용자 매뉴얼의 문제 해결 절차(Web 관리자 비밀번호 재설정)를 따르세요.
                                     </TextBlock>
                                 </StackPanel>
                             </StackPanel>
@@ -975,11 +975,11 @@
                                               SelectedItem="{Binding Vendor, Mode=TwoWay}"
                                               Style="{StaticResource WindowDarkComboBox}" Margin="0,0,0,12"/>
 
-                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="모델 (예: PCI-7432, PCI-1716)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="모델 (예: PCI-7432, PCI-1716)" CustomDescription="설치된 IO 보드의 모델명입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="모델 (Model — 예: PCI-7432, PCI-1716)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="모델 (Model)" CustomDescription="설치된 IO 보드의 모델명입니다." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,12"/>
 
-                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="디바이스 ID (시퀀스 노드에서 참조할 식별자)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="디바이스 ID (시퀀스 노드에서 참조할 식별자)" CustomDescription="검사 시퀀스에서 이 보드를 부를 때 쓰는 이름입니다. 예: IoBoard_1." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
+                                    <TextBlock Style="{StaticResource LabelStyle}"><Run Text="디바이스 ID (Device ID — 시퀀스 노드에서 참조할 식별자)"/><InlineUIContainer BaselineAlignment="Center"><controls:HelpIcon CustomTitle="디바이스 ID (Device ID)" CustomDescription="검사 시퀀스에서 이 보드를 부를 때 쓰는 이름입니다. 예: IoBoard_1." Margin="5,0,0,0"/></InlineUIContainer></TextBlock>
                                     <TextBox Text="{Binding DeviceId, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource WindowDarkTextBox}" Margin="0,0,0,12"/>
 

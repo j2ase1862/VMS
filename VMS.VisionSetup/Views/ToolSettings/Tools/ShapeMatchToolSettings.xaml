@@ -15,7 +15,7 @@
                 <TextBlock Text="Template" Style="{StaticResource ExpanderHeaderStyle}"/>
             </Expander.Header>
             <StackPanel Margin="5,0,0,0">
-                <TextBlock Foreground="#999999" FontSize="11" Margin="0,4,0,4">
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,4,0,4" TextWrapping="Wrap">
                     <Run Text="Status: "/>
                     <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
                 </TextBlock>

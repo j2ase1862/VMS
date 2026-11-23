@@ -735,7 +735,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.Manufacturer}" Foreground="White" FontSize="12" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedCamera.ManufacturerDisplayName}" Foreground="White" FontSize="12" Margin="0,2"/>
 
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Model" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedCamera.Model}" Foreground="White" FontSize="12" Margin="0,2"/>
@@ -958,9 +958,9 @@
                          대체되어 제거, UX 결정 2026-07-22). -->
                     <DataGrid Grid.Row="4" ItemsSource="{Binding Steps}"
                               SelectedItem="{Binding SelectedStep}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
+                              AutoGenerateColumns="False"
                               SelectionMode="Single" SelectionUnit="FullRow"
-                              HeadersVisibility="Column" CanUserAddRows="False"
+                              HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
                               Background="{StaticResource BrushBgCard}" Foreground="White"
                               BorderBrush="{StaticResource BrushBorderStrong}" BorderThickness="1"
                               RowBackground="{StaticResource BrushBgCard}" AlternatingRowBackground="#333337"
@@ -1001,18 +1001,31 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="#" Binding="{Binding DisplayName}" Width="*" MinWidth="50"/>
+                            <DataGridTextColumn Header="#" Binding="{Binding DisplayName, Mode=OneWay}" Width="*" MinWidth="50" IsReadOnly="True"/>
                             <!-- mm/px. 캘리브레이션 매니저의 [Apply to Current Recipe] 가 이 값을 갱신한다.
                                  F3 으로는 고배율(0.0004 mm/px 등)이 전부 "0.000" 으로 뭉개져 적용 여부를
-                                 확인할 수 없었다 (dev PC 검증 2026-09-15) → F5. -->
-                            <DataGridTextColumn Header="Resolution" Binding="{Binding Resolution, StringFormat={}{0:F5}}" Width="70">
+                                 확인할 수 없었다 (dev PC 검증 2026-09-15) → F5.
+                                 이 열만 직접 입력할 수 있다(두 번 클릭 · F2) — 표의 나머지 열은 읽기 전용.
+                                 정식 캘리브레이션이 있으면 그쪽이 우선이고, 이 값은 없을 때의 mm 환산에 쓰인다. -->
+                            <DataGridTextColumn Header="Resolution" Width="70"
+                                                Binding="{Binding Resolution, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F5}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="ToolTip" Value="mm/px — 캘리브레이션을 레시피에 적용하면 이 값이 갱신됩니다."/>
+                                        <Setter Property="ToolTip" Value="mm/px — 두 번 클릭해 직접 입력할 수 있습니다. 캘리브레이션을 레시피에 적용하면 이 값이 갱신됩니다."/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="CaretBrush" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="ToolTip" Value="mm/px — 0 이상의 숫자를 넣고 Enter 를 누릅니다. 0 이면 mm 환산을 하지 않습니다."/>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Tools" Binding="{Binding ToolCount}" Width="40"/>
+                            <DataGridTextColumn Header="Tools" Binding="{Binding ToolCount, Mode=OneWay}" Width="40" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -1049,7 +1062,7 @@
                             <TextBlock Grid.Column="0"
                                        Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="12"
                                        VerticalAlignment="Center" Cursor="Help"
-                                       ToolTip="비전 도구 팔레트입니다 (12 카테고리). 도구를 가운데 Tool Workspace 로 드래그하면 현재 스텝의 파이프라인에 추가됩니다."><Run Text="Tool Palette"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
+                                       ToolTip="비전 도구 팔레트입니다 (15 카테고리). 도구를 가운데 Tool Workspace 로 드래그하면 현재 스텝의 파이프라인에 추가됩니다."><Run Text="Tool Palette"/><Run Text=" ⓘ" Foreground="{StaticResource BrushTextMuted}"/></TextBlock>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <!-- Expand All -->
                                 <Button Click="ToolPaletteExpandAll_Click" ToolTip="Expand All"

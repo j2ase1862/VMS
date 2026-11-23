@@ -180,8 +180,21 @@ namespace VMS.ViewModels
         [NotifyCanExecuteChangedFor(nameof(SaveSettingsCommand))]
         private bool _canEditCameraSettings = true;
 
-        partial void OnCanEditCameraSettingsChanged(bool value) =>
+        partial void OnCanEditCameraSettingsChanged(bool value)
+        {
             OnPropertyChanged(nameof(IsManualExposureEnabled));
+            OnPropertyChanged(nameof(CameraSettingsLockHint));
+        }
+
+        /// <summary>권한이 없어 잠긴 칸에 보이는 안내 문구.</summary>
+        internal const string CameraSettingsLockHintText =
+            "노출 · 게인 · 카메라 설정 유지를 바꾸고 [Save Parameter] 로 저장하려면 Engineer 또는 Admin 계정으로 로그인하세요 (헤더의 사용자 칩).";
+
+        /// <summary>
+        /// 카메라 설정 권한이 없을 때 조작 상자에 보이는 안내 — 권한이 있으면 null(줄을 숨김).
+        /// 칸이 왜 꺼져 있는지 화면에서 알 수 없던 것을 보완한다(매뉴얼 4.5 · 4.8 절차는 로그인 전제를 적지 않음).
+        /// </summary>
+        public string? CameraSettingsLockHint => CanEditCameraSettings ? null : CameraSettingsLockHintText;
 
         // 카메라가 실제로 쓰는 현재 노출/게인 (read-back, 지원 카메라만) — 설정 창 열 때 갱신
         [ObservableProperty]

@@ -725,7 +725,7 @@ namespace VMS.VisionSetup.ViewModels
             IsStep3DCamera = LicenseBootCheck.Options.Camera3D
                 && (cam.CameraType is CameraType.AreaScan3D or CameraType.LineScan3D
                     || cam.Manufacturer.Replace("_", "").Contains("Mech", StringComparison.OrdinalIgnoreCase));
-            StepCameraSummary = $"카메라: {cam.Name} ({cam.Manufacturer} · {cam.CameraType})";
+            StepCameraSummary = $"카메라: {cam.Name} ({cam.ManufacturerDisplayName} · {cam.CameraType})";
             _ = RefreshStepCameraCurrentTextAsync();
         }
 
@@ -1494,6 +1494,10 @@ namespace VMS.VisionSetup.ViewModels
 
             try
             {
+                // Run All 과 같이 실행 시점에 스텝 Resolution 재반영 — Steps 표에서 값을 고친 직후에도 유효
+                if (SelectedStep != null)
+                    _visionService.CurrentStepResolutionMmPerPx = SelectedStep.Resolution;
+
                 var result = _visionService.ExecuteTool(SelectedTool.VisionTool, CurrentImage);
 
                 ExecutionTimeText = $"실행 시간: {SelectedTool.VisionTool.ExecutionTime:F2}ms";
@@ -2327,6 +2331,12 @@ namespace VMS.VisionSetup.ViewModels
                         cm.PickFromPixel(p.Item0, p.Item1, p.Item2);
                         StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
                     }
+                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+                    {
+                        // Color Extract 도 같은 클릭으로 선택 모델의 H/S/V 범위를 채운다(매뉴얼 §7.4 ②)
+                        cx.PickFromPixel(p.Item0, p.Item1, p.Item2);
+                        StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
+                    }
                 }
                 else
                 {
@@ -2334,6 +2344,11 @@ namespace VMS.VisionSetup.ViewModels
                     if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
                     {
                         cm.PickFromPixel(v, v, v);
+                        StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
+                    }
+                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
+                    {
+                        cx.PickFromPixel(v, v, v);
                         StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
                     }
                 }

@@ -15,7 +15,7 @@
                 <TextBlock Foreground="#888888" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,6"
                            Text="1) Training Region을 학습용 텍스트에 맞춤. 2) Known String 입력. 3) Train 클릭. 분할 개수와 Known String 길이가 일치해야 학습 성공."/>
 
-                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2">
+                <TextBlock Foreground="#999999" FontSize="11" Margin="0,2,0,2" TextWrapping="Wrap">
                     <Run Text="Status: "/>
                     <Run Text="{Binding TrainStatus, Mode=OneWay}" Foreground="#00BFFF" FontWeight="Bold"/>
                 </TextBlock>

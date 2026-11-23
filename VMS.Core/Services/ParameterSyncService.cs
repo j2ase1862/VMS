@@ -513,11 +513,11 @@ namespace VMS.Core.Services
                 _clientIndex, recipeId, results, featureMetrics, correlationKey, overallPass,
                 WorkOrderId, LotId, OperatorId, SerialNumber, DateTimeOffset.Now);
 
-            var outcome = await TrySendAsync(request);
+            var (outcome, rejectReason) = await TrySendAsync(request);
             // 거절된 요청은 큐에 넣지 않는다. 넣으면 큐 맨 앞에 박혀 뒤의 모든 결과를 막는다.
             // 대신 rejected/ 에 남긴다 — 드레인 경로와 같다. 그 사이클의 측정값이 거기에만 남는다.
             if (outcome is SendOutcome.Retry or SendOutcome.NotRegistered) EnqueueFailed(request);
-            else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir);
+            else if (outcome == SendOutcome.Rejected) EnqueueFailed(request, RejectedSubdir, rejectReason);
             return outcome == SendOutcome.Sent;
         }
 
@@ -640,8 +640,11 @@ namespace VMS.Core.Services
             NotRegistered,
         }
 
-        /// <summary>실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생.</summary>
-        private async Task<SendOutcome> TrySendAsync(ParameterResultUploadRequest request)
+        /// <summary>
+        /// 실제 HTTP POST + 응답에서 WO 진행률 이벤트 발생.
+        /// <c>Reason</c> 은 거절 · 라인 미등록일 때 서버가 준 답(상태 코드 + 본문 앞부분) — rejected/ 의 사유 파일에 쓴다.
+        /// </summary>
+        private async Task<(SendOutcome Outcome, string? Reason)> TrySendAsync(ParameterResultUploadRequest request)
         {
             try
             {
@@ -658,17 +661,19 @@ namespace VMS.Core.Services
                         var body = await SafeReadAsync(response);
                         Debug.WriteLine($"[ParameterSync] 서버가 라인 {_clientIndex} 를 모릅니다(404). " +
                                         $"재등록될 때까지 큐에 보관합니다 — {body}");
-                        return SendOutcome.NotRegistered;
+                        return (SendOutcome.NotRegistered,
+                            $"서버가 이 라인(Client Index {_clientIndex})을 모릅니다 — HTTP 404: {body}");
                     }
                     if (IsPermanentRejection(response.StatusCode))
                     {
                         var body = await SafeReadAsync(response);
                         Debug.WriteLine($"[ParameterSync] CRITICAL: 서버가 이 요청을 거절했습니다 " +
                                         $"({(int)response.StatusCode}). 다시 보내지 않습니다 — {body}");
-                        return SendOutcome.Rejected;
+                        return (SendOutcome.Rejected,
+                            $"서버가 이 결과를 받지 않았습니다 — HTTP {(int)response.StatusCode}: {body}");
                     }
                     Debug.WriteLine($"[ParameterSync] UploadResults failed: {response.StatusCode}");
-                    return SendOutcome.Retry;
+                    return (SendOutcome.Retry, null);
                 }
 
                 Debug.WriteLine($"[ParameterSync] Uploaded {request.Results.Count} results for recipe {request.RecipeId}");
@@ -700,13 +705,13 @@ namespace VMS.Core.Services
                     Debug.WriteLine($"[ParameterSync] WO progress parse skip: {ex.Message}");
                 }
 
-                return SendOutcome.Sent;
+                return (SendOutcome.Sent, null);
             }
             catch (Exception ex)
             {
                 // 네트워크·직렬화 문제. 다음에 될 수 있으므로 재시도로 본다.
                 Debug.WriteLine($"[ParameterSync] UploadResults error: {ex.Message}");
-                return SendOutcome.Retry;
+                return (SendOutcome.Retry, null);
             }
         }
 
@@ -715,7 +720,8 @@ namespace VMS.Core.Services
         private const string RejectedSubdir = "rejected";
 
         /// <param name="subdir">null 이면 재시도 큐, <see cref="RejectedSubdir"/> 면 거절 보관함</param>
-        private void EnqueueFailed(ParameterResultUploadRequest request, string? subdir = null)
+        /// <param name="rejectReason">거절 보관함에 넣을 때 함께 남길 사유(사유 파일)</param>
+        private void EnqueueFailed(ParameterResultUploadRequest request, string? subdir = null, string? rejectReason = null)
         {
             try
             {
@@ -725,6 +731,7 @@ namespace VMS.Core.Services
                 var path = Path.Combine(dir, filename);
                 var json = JsonSerializer.Serialize(request, JsonOptions);
                 File.WriteAllText(path, json, Encoding.UTF8);
+                if (subdir is not null) WriteRejectReason(path, rejectReason);
                 Debug.WriteLine($"[ParameterSync] Queued failed upload → {filename} (pending: {PendingUploadCount})");
             }
             catch (Exception ex)
@@ -788,7 +795,9 @@ namespace VMS.Core.Services
                             // Web 은 살아 있는데 그 이름의 레시피가 끝내 없다 — 큐 맨 앞을 막지 않게 치운다.
                             Debug.WriteLine($"[ParameterSync] 레시피 '{request.PendingRecipeName}' 이 Web 에 없습니다. " +
                                             $"옆으로 치웁니다: {Path.GetFileName(file)}");
-                            MoveAside(file);
+                            MoveAside(file,
+                                $"레시피 '{request.PendingRecipeName}' 이 Web 에 등록되어 있지 않습니다 — " +
+                                $"{NotRegisteredGrace.TotalMinutes:F0}분 넘게 이어져 보관함으로 옮겼습니다.");
                             continue;
                         }
                         else
@@ -797,7 +806,7 @@ namespace VMS.Core.Services
                         }
                     }
 
-                    var outcome = await TrySendAsync(request);
+                    var (outcome, rejectReason) = await TrySendAsync(request);
                     if (outcome == SendOutcome.Sent)
                     {
                         try { File.Delete(file); } catch (Exception ex) { Debug.WriteLine($"[ParameterSync] queue file delete failed: {ex.Message}"); }
@@ -806,7 +815,7 @@ namespace VMS.Core.Services
                     {
                         // 다시 보내도 같은 답이 온다. 큐에 두면 맨 앞에 박혀 뒤의 모든 결과를 막으므로
                         // 옆으로 치운다 — 지우지는 않는다. 왜 거절됐는지 나중에 볼 수 있어야 한다.
-                        MoveAside(file);
+                        MoveAside(file, rejectReason);
                     }
                     else if (outcome == SendOutcome.NotRegistered)
                     {
@@ -816,7 +825,9 @@ namespace VMS.Core.Services
                         {
                             Debug.WriteLine($"[ParameterSync] 라인 미등록 상태가 {age.TotalMinutes:F0}분 넘게 " +
                                             $"이어져 큐를 막고 있습니다. 옆으로 치웁니다: {Path.GetFileName(file)}");
-                            MoveAside(file);
+                            MoveAside(file,
+                                $"{rejectReason} ({NotRegisteredGrace.TotalMinutes:F0}분 넘게 이어져 보관함으로 옮겼습니다. " +
+                                "Web 에 이 라인이 등록되어 있는지 확인하세요.)");
                         }
                         else
                         {
@@ -868,14 +879,17 @@ namespace VMS.Core.Services
         /// <summary>
         /// 거절된 큐 파일을 <c>rejected/</c> 로 옮긴다. 지우지 않는 이유는 그 사이클의 측정값이
         /// 거기에만 남아 있기 때문이다 — 왜 거절됐는지 보고 사람이 되살릴 수 있어야 한다.
+        /// 사유는 같은 이름의 <c>.reason.txt</c> 로 옆에 둔다(사용자 매뉴얼 10.5 "사유 파일 동봉").
         /// </summary>
-        private void MoveAside(string file)
+        private void MoveAside(string file, string? reason)
         {
             try
             {
                 var dir = Path.Combine(_queueDir, RejectedSubdir);
                 Directory.CreateDirectory(dir);
-                File.Move(file, Path.Combine(dir, Path.GetFileName(file)), overwrite: true);
+                var dest = Path.Combine(dir, Path.GetFileName(file));
+                File.Move(file, dest, overwrite: true);
+                WriteRejectReason(dest, reason);
                 Debug.WriteLine($"[ParameterSync] 거절된 업로드를 rejected/ 로 옮겼습니다: {Path.GetFileName(file)}");
                 // 이 한 건은 Web 에 영영 올라가지 않는다 — 검사 이력·WO 수량이 그만큼 비므로
                 // 감사 로그에 흔적을 남긴다(디버그 로그는 배포본에서 보이지 않는다).
@@ -890,6 +904,29 @@ namespace VMS.Core.Services
                 // 옮기지 못하면 큐가 막힌다. 그때는 지운다 — 한 건을 잃더라도 나머지는 올라가야 한다.
                 Debug.WriteLine($"[ParameterSync] CRITICAL: 거절된 파일을 옮기지 못해 지웁니다: {ex.Message}");
                 try { File.Delete(file); } catch { }
+            }
+        }
+
+        /// <summary>사유 파일의 확장자 — <c>rejected/</c> 안에서 결과 파일과 이름이 같다.</summary>
+        internal const string RejectReasonExtension = ".reason.txt";
+
+        /// <summary>
+        /// 거절 보관함의 결과 파일 옆에 사유 파일을 쓴다. 못 써도 흐름을 멈추지 않는다 — 결과 파일이 본체다.
+        /// 건수 집계(<see cref="RejectedUploadCount"/>)는 <c>*.json</c> 만 세므로 영향이 없다.
+        /// </summary>
+        private static void WriteRejectReason(string rejectedJsonPath, string? reason)
+        {
+            try
+            {
+                var text = string.IsNullOrWhiteSpace(reason) ? "사유를 받지 못했습니다." : reason.Trim();
+                File.WriteAllText(
+                    Path.ChangeExtension(rejectedJsonPath, RejectReasonExtension),
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {text}{Environment.NewLine}",
+                    Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ParameterSync] 사유 파일을 쓰지 못했습니다: {ex.Message}");
             }
         }
 

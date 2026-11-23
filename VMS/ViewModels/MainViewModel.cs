@@ -1164,17 +1164,13 @@ namespace VMS.ViewModels
             RebuildRecipeList();
 
             var clientIndex = _configService.LoadSystemConfiguration().ClientIndex;
+            SystemStatus = DescribeWebRecipeSync(result.Success, result.Total, result.Added, result.LinkedByName, clientIndex);
             if (!result.Success)
             {
-                SystemStatus = $"Web 레시피 동기화 실패 — Web 서버 연결 또는 ClientIndex({clientIndex}) 등록 확인";
                 LogService?.Log(SystemStatus, LogLevel.Warning, "Recipe");
                 return;
             }
 
-            SystemStatus = result.Total == 0
-                ? $"Web 레시피 0개 (ClientIndex {clientIndex}) — Web 에서 이 클라이언트용으로 만들었는지 확인"
-                : $"Web 레시피 {result.Total}개 동기화 (ClientIndex {clientIndex}) — 새 항목 {result.Added}" +
-                  (result.LinkedByName > 0 ? $", 이름 연결 {result.LinkedByName}" : string.Empty);
             LogService?.Log(SystemStatus, LogLevel.Info, "Recipe");
             if (result.LinkedByName > 0)
             {
@@ -1278,6 +1274,21 @@ namespace VMS.ViewModels
 
             // Web 파라미터 캐시 일치 보장 (레시피 이름이 바뀐 경우 대비, 백그라운드)
             _ = EnsureWebParamCacheAsync();
+        }
+
+        /// <summary>
+        /// Recipe 패널 ↻ 결과를 상태바 한 줄로 — 사용자 매뉴얼 4.6 의 예("Web 레시피 3개 — 새 항목 1, 이름 연결 1",
+        /// 0 개면 라인 번호 확인 힌트)와 같은 글자로 시작한다. 라인 번호 값은 원인 판별용으로 끝에 붙인다.
+        /// </summary>
+        internal static string DescribeWebRecipeSync(bool success, int total, int added, int linkedByName, int clientIndex)
+        {
+            if (!success)
+                return $"Web 레시피 동기화 실패 — Web 서버 연결 또는 라인 번호(Client Index {clientIndex}) 등록 확인";
+            if (total == 0)
+                return $"Web 레시피 0개 — 설정 마법사의 Client Index(라인 번호 {clientIndex})가 Web 의 라인과 맞는지, Web 에서 이 라인용 레시피를 만들었는지 확인";
+            return $"Web 레시피 {total}개 — 새 항목 {added}"
+                   + (linkedByName > 0 ? $", 이름 연결 {linkedByName}" : string.Empty)
+                   + $" (라인 번호 {clientIndex})";
         }
 
         /// <summary>Web 레시피 동기화 요약 — 새로고침 버튼이 상태 표시에 사용.</summary>

@@ -67,8 +67,92 @@
         <Setter Property="FontSize" Value="12"/>
     </Style>
 
+    <!-- ========================= 버튼 공통 틀 =========================
+         WPF 기본 버튼 틀은 마우스를 올리거나 비활성일 때 Background 를 무시하고 밝은 바탕
+         (#BEE6FD / #F4F4F4)을 칠한다 — 어두운 화면용 흰 글자 버튼이 그 상태에서 읽히지 않았다
+         (ROI 도구 막대 [Delete], Color Extract [− Remove] 등).
+         이 틀은 어떤 상태에서도 지정한 Background 를 유지한다:
+         올림 = 밝은 덧칠, 누름 = 어두운 덧칠, 비활성 = 전체를 흐리게. -->
+    <ControlTemplate x:Key="FlatButtonTemplate" TargetType="ButtonBase">
+        <Grid x:Name="Root" SnapsToDevicePixels="True">
+            <Border x:Name="Bd"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"/>
+            <Border x:Name="Tint" Background="White" Opacity="0" IsHitTestVisible="False"/>
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                              RecognizesAccessKey="True"
+                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Tint" Property="Opacity" Value="0.14"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Tint" Property="Background" Value="Black"/>
+                <Setter TargetName="Tint" Property="Opacity" Value="0.22"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Root" Property="Opacity" Value="0.45"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!-- Style 을 지정하지 않은 버튼 전부(도구 설정 · 이미지 도구 막대의 Background/Foreground 직접 지정 버튼)에
+         위 틀을 적용. 색 · 여백 · 글자는 건드리지 않는다. -->
+    <Style TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
+    </Style>
+
+    <!-- 이미지 도구 막대의 모드 선택(Select · Rectangle …) — 고른 항목은 강조색 바탕 + 흰 글자 -->
+    <Style x:Key="ToolbarToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="#444444"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="#707070"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"/>
+                        <Border x:Name="Tint" Background="White" Opacity="0" IsHitTestVisible="False"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#007ACC"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#3399FF"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Tint" Property="Opacity" Value="0.14"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Tint" Property="Background" Value="Black"/>
+                            <Setter TargetName="Tint" Property="Opacity" Value="0.22"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Primary Action Button (blue) -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#007ACC"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderBrush" Value="#005A9E"/>
@@ -80,6 +164,7 @@
 
     <!-- Secondary Action Button (gray) -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#555555"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderBrush" Value="#444444"/>
@@ -90,6 +175,7 @@
 
     <!-- Success/Train Button (green) -->
     <Style x:Key="SuccessButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#2D7D46"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -100,6 +186,7 @@
 
     <!-- Warning/Apply Button (orange) -->
     <Style x:Key="WarningButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#D4760A"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -110,6 +197,7 @@
 
     <!-- Add Model Button (blue accent) -->
     <Style x:Key="AccentButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#0078D4"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -120,6 +208,7 @@
 
     <!-- Danger Button (red, same sizing as AccentButtonStyle) -->
     <Style x:Key="DangerButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#C42B1C"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -130,6 +219,7 @@
 
     <!-- Delete Button (red) -->
     <Style x:Key="DeleteButtonStyle" TargetType="Button">
+        <Setter Property="Template" Value="{StaticResource FlatButtonTemplate}"/>
         <Setter Property="Background" Value="#8B0000"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>

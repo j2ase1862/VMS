@@ -148,7 +148,13 @@ namespace VMS.Camera.Models
         /// 표시용 카메라 정보 문자열
         /// </summary>
         [JsonIgnore]
-        public string DisplayInfo => $"{Manufacturer} {Model}";
+        public string DisplayInfo => $"{ManufacturerDisplayName} {Model}";
+
+        /// <summary>
+        /// 화면 표시용 제조사 이름 — 저장 값의 밑줄을 뺀 이름 (예: "Mech_Mind" → "Mech-Mind").
+        /// </summary>
+        [JsonIgnore]
+        public string ManufacturerDisplayName => CameraManufacturerNames.ToDisplayName(Manufacturer);
     }
 
     /// <summary>

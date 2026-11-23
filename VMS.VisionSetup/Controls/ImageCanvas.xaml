@@ -75,56 +75,38 @@
             <!-- ROI Tool Buttons -->
             <RadioButton x:Name="SelectToolBtn"
                          Content="Select"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          IsChecked="True"
                          Checked="SelectTool_Checked"/>
 
             <RadioButton x:Name="RectangleToolBtn"
                          Content="Rectangle"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          Checked="RectangleTool_Checked"/>
 
             <RadioButton x:Name="RectAffineToolBtn"
                          Content="RectAffine"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          Checked="RectAffineTool_Checked"/>
 
             <RadioButton x:Name="CircleToolBtn"
                          Content="Circle"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          Checked="CircleTool_Checked"/>
 
             <RadioButton x:Name="EllipseToolBtn"
                          Content="Ellipse"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          Checked="EllipseTool_Checked"/>
 
             <RadioButton x:Name="PolygonToolBtn"
                          Content="Polygon"
-                         Style="{StaticResource {x:Type ToggleButton}}"
-                         Foreground="White"
-                         Background="#444"
-                         Padding="8,4"
+                         Style="{StaticResource ToolbarToggleButtonStyle}"
                          Margin="2"
                          Checked="PolygonTool_Checked"/>
 
@@ -139,7 +121,8 @@
             <Separator Margin="5,0"/>
 
             <!-- ROI Actions -->
-            <Button Content="Delete" Margin="2" Click="DeleteROI_Click" Background="#8B0000" Foreground="White" Padding="8,4"/>
+            <!-- 위험 동작 — 도구 설정과 같은 빨강 버튼 스타일 (마우스를 올려도 빨강 유지) -->
+            <Button Content="Delete" Margin="2" Click="DeleteROI_Click" Style="{StaticResource DangerButtonStyle}" Padding="8,4"/>
             <Button Content="Clear All" Margin="2" Click="ClearAllROI_Click" Background="#444" Foreground="White" Padding="8,4"/>
         </StackPanel>
 

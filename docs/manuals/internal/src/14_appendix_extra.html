@@ -21,8 +21,10 @@
   <li>[발급] → "발급 확인" 창에서 내용을 확인합니다. 규칙에 어긋나면 "발급 규칙 위반" 이 나옵니다 — 고객명 · 지문 필수, 좌석 1 이상, Trial · Internal 은 실행 만료 필수, Internal 은 90 일 이내, 지문 <code>*</code>(모든 PC)는 Internal 만.</li>
   <li>만들어진 <code>license.lic</code> 를 고객 PC 의 설정 마법사 [라이선스 파일 가져오기...] 로 설치합니다(§2.6). 파일은 <code>C:\ProgramData\BODA\VMS\license.lic</code> 에 들어갑니다.</li>
 </ol>
+<figure><img src="figs/recap/licgen/licgen_issue.png" data-width="620" alt="LicGen 라이선스 발급 탭"><figcaption>[라이선스 발급] 탭 — 위 배너(서명 키 · 백업 상태 · [새로 고침] · [백업 실행]), 고객명 · 종류 · 서명 키 · 대상 PC 지문 · 좌석 수 · 유지보수 만료 · 실행 만료 · 확장 옵션 5 개 · [발급] (예시 값)</figcaption></figure>
 <p>라이선스 번호는 <code>LIC-연도-순번</code> 으로 자동으로 붙습니다. 확장 옵션을 하나도 고르지 않으면 기본 구성 라이선스입니다(§1.6). 옵션 칸이 생기기 전에 발급해 옵션이 적혀 있지 않은 라이선스는 확장 옵션 전부로 동작합니다.</p>
 <h4>발급 대장</h4>
+<figure><img src="figs/recap/licgen/licgen_ledger.png" data-width="620" alt="LicGen 발급 대장 탭"><figcaption>[발급 대장] 탭 — 위에 건수와 대장 파일 위치, 최신 발급이 맨 위, 아래 비고 칸과 [비고 저장] (예시 대장 3 건)</figcaption></figure>
 <p>[발급 대장] 탭에 발급한 라이선스가 한 줄씩 남습니다(라이선스 ID · 고객명 · 종류 · 지문 · 좌석 · 유지보수 · 실행 만료 · 발급 시각 · 발급자 · 비고 — 옵션 열은 없음). 긴 고객명 · 비고는 줄여 보이고 마우스를 올리면 전체가 나옵니다. 줄을 고르고 비고를 적어 [비고 저장] 합니다. 대장 파일은 발급 PC 의 <code>%USERPROFILE%\.boda-licgen\ledger.jsonl</code> 이며 손으로 고치지 않습니다.</p>
 <ul>
   <li>발급한 주가 끝나기 전에 위쪽 [백업 실행] 으로 서명 키 · 대장을 오프라인 USB 두 개에 백업합니다. 창 위쪽 배너는 백업 미반영 발급 건수를 <strong>매체마다</strong> 보여 줍니다(예: <code>T7 Shield [..] 0건 · KGD-SSD [..] 3건</code>). 두 매체 모두 0건이 되어 노란 글자가 사라져야 끝입니다 — 한 매체만 갱신하면 다른 매체의 건수가 남고 경고도 그대로입니다.</li>
