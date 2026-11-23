@@ -6,8 +6,8 @@
 <h4>라인 PC (VMS)</h4>
 <ul>
   <li><strong>수동 백업</strong> — Admin Tools → Backup / Restore → [Run Backup...] 로 ZIP 을 만듭니다(§4.11). 설정 파일 · 레이아웃 · 시퀀스(<code>process_sequence.json</code>) · 신호 설정 · 사용자 DB · 검사 이력 DB · 레시피 전체가 들어가며 감사 로그는 선택입니다. VMS 를 켠 채로 받을 수 있습니다. 레시피를 크게 바꾸기 전, 프로그램을 업그레이드하기 전, PC 를 교체하기 전에 받아 두세요.</li>
-  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code> 이며 다른 드라이브나 네트워크 폴더를 권장합니다. 파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)이고, 백업할 때마다 보존 기간이 지난 자동 백업 파일을 지웁니다. 위치를 바꾸면 보존 설정 [Preview] 와 지원 패키지의 백업 목록도 그 위치를 봅니다.</li>
-  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 [기존 파일 덮어쓰기] 를 켠 뒤 [Run Restore]. VMS 를 켠 채로 할 수 있으며, 결과 줄에 "설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다. [감사 로그도 복원] 은 이 PC 에 없는 날짜의 감사 로그만 되살리고 이미 있는 날짜는 그대로 둡니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
+  <li><strong>자동 백업</strong> — Admin Tools → Auto Backup Settings 에서 활성화 · 주기(시간) · 보존(일) · 위치를 정합니다. 기본 위치는 <code>%LocalAppData%\BODA VISION AI\backups</code>(<code>--instance</code> 로 실행한 VMS 는 그 인스턴스 폴더 아래 <code>backups</code>, §11.5)이며 다른 드라이브나 네트워크 폴더를 권장합니다. 파일 이름은 <code>auto-backup-날짜-시각.zip</code>(이 PC 시각)이고, 백업할 때마다 보존 기간이 지난 자동 백업 파일을 지웁니다. 위치를 바꾸면 보존 설정 [Preview] 와 지원 패키지의 백업 목록도 그 위치를 봅니다.</li>
+  <li><strong>복원</strong> — Backup / Restore 의 백업 복원에서 파일을 고르고 "기존 파일 덮어쓰기 (Overwrite)" 가 켜져 있는지 확인한 뒤(기본 켜짐) [Run Restore]. VMS 를 켠 채로 할 수 있으며, 결과 줄에 "설정은 VMS 를 다시 시작하면 적용됩니다" 가 나오면 VMS 를 다시 시작합니다. "감사 로그도 복원 (Restore Audit)"(기본 켜짐)은 이 PC 에 없는 날짜의 감사 로그만 되살리고 이미 있는 날짜는 그대로 둡니다. 다른 PC 에 복원하면 카메라 구성이 다를 수 있으므로 설정 마법사 3 단계를 확인하세요.</li>
 </ul>
 <h4>Web 서버</h4>
 <ul>
@@ -22,9 +22,9 @@
 <h3 id="mt-retention">11.2 데이터 보존과 디스크 관리</h3>
 <table class="cols-3-3-3">
   <tr><th>데이터</th><th>기본 보존</th><th>설정 위치</th></tr>
-  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — VMS 시작 2 분 뒤 한 번, 켜 둔 동안 하루 한 번 보존 기간이 지난 날짜 폴더를 지우고 감사 로그(Configuration)에 남깁니다. VMS 를 끄고 지내는 PC 는 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다(같은 정리)</td></tr>
-  <tr><td>VMS 검사 이력 DB</td><td>90 일</td><td>Retention Settings "검사 이력" 행</td></tr>
-  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings 전역 · 카테고리별. 감사 로그 날짜 파일은 전역 · 카테고리별 값 중 가장 긴 기간이 지나야 통째로 지워지므로, 카테고리별로 길게 잡은 기간(보안 1095 일 등)이 그대로 지켜집니다</td></tr>
+  <tr><td>VMS 검사 이미지 (OK/NG 파일)</td><td>Image Save Settings 의 보존 기간(일)</td><td>§4.6 — VMS 시작 2 분 뒤 한 번, 켜 둔 동안 하루 한 번 보존 기간이 지난 날짜 폴더를 지우고 감사 로그(Configuration)에 남깁니다(보존 기간이 0 이면 지우지 않음). VMS 를 끄고 지내는 PC 는 Windows 예약 작업으로 <code>VMS.exe --cleanup-images</code> 를 돌려도 됩니다(같은 정리)</td></tr>
+  <tr><td>VMS 검사 이력 DB</td><td>90 일</td><td>Admin Tools → Retention Settings... 의 "검사 이력" 행</td></tr>
+  <tr><td>VMS 감사 로그 · 자동 백업 · 업로드 큐</td><td>프리셋 Standard 기준</td><td>Retention Settings... 전역 · 카테고리별. 감사 로그 날짜 파일은 전역 · 카테고리별 값 중 가장 긴 기간이 지나야 통째로 지워지므로, 카테고리별로 길게 잡은 기간(보안 1095 일 등)이 그대로 지켜집니다</td></tr>
   <tr><td>Web 검사 이력 · 측정값 · 알람 · 상태 로그</td><td><strong>무제한</strong>(기본 꺼짐)</td><td><code>DataRetention</code> 설정을 켜고 항목별 일수를 지정. 감사 로그는 법적 보존 기간이 따로 있으므로 기본 무제한</td></tr>
   <tr><td>Web 검사 사진</td><td>90 일</td><td><code>ImageStore:RetentionDays</code></td></tr>
   <tr><td>Web DB 백업</td><td>14 벌</td><td><code>DatabaseBackup:RetainCount</code></td></tr>
@@ -70,7 +70,7 @@
   <tr><td>카메라 로그</td><td><code>…\logs\camera.log</code></td><td>카메라 SDK 로그</td></tr>
   <tr><td>업데이트 로그</td><td><code>C:\ProgramData\BODA\VMS\update-bootstrap.log</code></td><td>인앱 업데이트 과정</td></tr>
   <tr><td>Web DB · 백업 · 사진</td><td><code>C:\ProgramData\BODA\VMS\</code> (BodaVision.db · backups\ · images\)</td><td>서버 데이터</td></tr>
-  <tr><td>Web 서비스 로그</td><td><code>{설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
+  <tr><td>Web 서비스 로그</td><td><code>{Web 설치 폴더}\Logs\boda-vms-YYYYMMDD.json</code> (14 일 보관 — VMS 와 함께 설치한 동봉 서버는 <code>{VMS 설치 폴더}\Web\Logs\</code>) · Windows 이벤트 뷰어 → Application</td><td>서비스 시작 실패 등</td></tr>
   <tr><td>◆MLOps 데이터 · 로그</td><td>설치 시 지정한 데이터 폴더(지정하지 않으면 <code>C:\ProgramData\BODA VMS MLOps</code>) — mlops.db · storage\ · logs\ · job-logs\(학습 작업 로그)</td><td></td></tr>
   <tr><td>◆학습 워커</td><td><code>%ProgramData%\BODA VMS TrainWorker\</code> (worker.json · venv\ · logs\)</td><td></td></tr>
 </table>
@@ -79,6 +79,6 @@
 <ol>
   <li>VMS Admin Tools → Support Package... 로 진단 ZIP 을 만듭니다(설정 · 감사 로그 · 환경 정보 · 헬스 스냅샷 · 자동 백업 목록 · ◆MLOps 전송 큐 상태 포함, 레시피 · 사용자 DB 는 미포함). 카메라 로그(<code>logs\camera.log</code>)와 Web 로그는 들어가지 않으므로 카메라 · Web 문제면 따로 첨부합니다(§11.6).</li>
   <li>증상이 난 시각과 System Log 의 관련 줄, 화면 캡처를 함께 준비합니다.</li>
-  <li>Web 문제는 <code>{설치 폴더}\Logs\</code> 의 해당 날짜 로그와 <code>/health</code> 응답을, ◆MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
+  <li>Web 문제는 Web 서비스 로그 폴더(§11.6)의 해당 날짜 로그와 <code>/health</code> 응답을, ◆MLOps 문제는 학습 작업 상세의 로그를 첨부합니다.</li>
 </ol>
 </section>

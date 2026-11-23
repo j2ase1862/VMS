@@ -58,7 +58,7 @@
 <figure><img src="../gs/screenshots/v3/templates/2d-code-reader.png" data-width="420" alt="코드 판독 체인"><figcaption>Code Reader → Result</figcaption></figure>
 <ol>
   <li>템플릿 식별 → <strong>코드 판독 (바코드/QR/DataMatrix)</strong> 을 생성합니다.</li>
-  <li><strong>Code Reader</strong> 의 Code Reader Mode 를 코드 종류(1D 바코드 · 2D(QR · DataMatrix) · 자동)에 맞추고 ROI 를 코드 주변으로 그립니다. 작은 코드는 Try Harder 를 켭니다.</li>
+  <li><strong>Code Reader</strong> 의 Code Reader Mode 를 코드 종류(Auto · QRCode · Barcode1D · DataMatrix · PDF417)에 맞추고 ROI 를 코드 주변으로 그립니다. 작은 코드는 Try Harder 를 켭니다.</li>
   <li>판독 문자열을 검증하려면 Expert Mode 를 켜고 Verification 묶음의 Enable Verification 을 켠 뒤 Expected Text 를 넣습니다(정규식으로 비교하려면 Use Regex Match). 인쇄 품질까지 보려면 Quality Grading 묶음의 Enable Grading 과 Min Pass Grade 를 씁니다(이 묶음도 Expert Mode 에서 보입니다).</li>
   <li>Run 후 Run Results 의 DecodedText 를 확인합니다. 곡면 라벨은 Circle Fit → Polar Unwrap 을 앞에 두어 펼친 뒤 읽습니다.</li>
 </ol>
