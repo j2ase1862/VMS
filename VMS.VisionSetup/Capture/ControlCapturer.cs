@@ -493,6 +493,46 @@ namespace VMS.VisionSetup.Capture
             }
         }
 
+        /// <summary>
+        /// 시퀀스 편집기 캡처 장면(매뉴얼 §5.10) — [디폴트 생성] 으로 만든 기본 흐름, 첫 신호 노드(Wait Trigger) 선택,
+        /// I/O Monitor 패널 열림. 모두 편집기 안의 메모리 상태만 바꾼다: 디폴트 생성은 노드 · 연결선을 만들 뿐이고,
+        /// 모니터 패널 열기는 표 항목만 모은다(장치 연결 · 신호 출력 없음). 저장 명령은 부르지 않으므로
+        /// process_sequence.json 을 쓰지 않는다. 확인 창이 뜨지 않도록 카메라가 없으면 건너뛰고, 불러온 흐름은 비운 뒤 만든다.
+        /// </summary>
+        public static void PrepareSequenceScene(Window seqWin, string logPath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            if (seqWin.DataContext is not ViewModels.SequenceEditorViewModel vm)
+            {
+                File.AppendAllText(logPath, "Sequence scene: 편집기 VM 없음\n");
+                return;
+            }
+            if (vm.AvailableCameraIds.Count == 0)
+            {
+                // 디폴트 생성이 경고 창을 띄우는 조건 — 빈 편집기 그대로 찍는다
+                File.AppendAllText(logPath, "Sequence scene: 카메라 없음 — 디폴트 생성 건너뜀\n");
+                return;
+            }
+
+            vm.SelectedNode = null;
+            vm.Edges.Clear();
+            vm.Nodes.Clear();   // 노드가 있으면 디폴트 생성이 확인 창을 띄운다
+            vm.GenerateDefaultSequenceCommand.Execute(null);
+
+            var trigger = System.Linq.Enumerable.FirstOrDefault(vm.Nodes, n => n.Name == "Wait Trigger");
+            if (trigger != null)
+            {
+                trigger.IsSelected = true;   // 캔버스에서 노드를 클릭한 것과 같은 표시
+                vm.SelectedNode = trigger;
+            }
+            if (!vm.IsMonitorPanelVisible)
+                vm.ToggleMonitorPanelCommand.Execute(null);
+
+            File.AppendAllText(logPath,
+                $"Sequence scene: 노드 {vm.Nodes.Count} · 연결 {vm.Edges.Count} · 카메라 {vm.AvailableCameraIds.Count} · " +
+                $"선택 {vm.SelectedNode?.Name ?? "-"} · 모니터 {vm.IsMonitorPanelVisible}\n");
+        }
+
         private static async Task LayoutWindow(Window win, bool standard, double w, double h)
         {
             for (int i = 0; i < 3; i++)

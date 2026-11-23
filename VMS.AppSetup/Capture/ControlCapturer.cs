@@ -48,6 +48,7 @@ namespace VMS.AppSetup.Capture
         public static async Task RunAsync(Window window, SetupViewModel vm, string outputDir)
         {
             Directory.CreateDirectory(outputDir);
+            HideInstanceBadge(window);
 
             var seen = new HashSet<DependencyObject>();
             var manifest = new List<string>();
@@ -101,6 +102,7 @@ namespace VMS.AppSetup.Capture
         public static async Task RunFullPageAsync(Window window, SetupViewModel vm, string outputDir)
         {
             Directory.CreateDirectory(outputDir);
+            HideInstanceBadge(window);
 
             // page2 = MaxWidth 500, page5 = MaxWidth 600 StackPanel — 두 페이지만 ScrollViewer 가
             // StackPanel 을 직접 감싸므로 MaxWidth 로 식별 가능. 페이지 Visibility 바인딩에 의존하지 않고
@@ -202,6 +204,17 @@ namespace VMS.AppSetup.Capture
                 string path = Path.Combine(outputDir, $"FullPage_P{page}_{tag}.png");
                 RenderElement(panel, fullW, fullH, 24, backdrop, path);
             }
+        }
+
+        /// <summary>
+        /// 머리줄의 "인스턴스: &lt;이름&gt;" 배지를 숨긴다. 캡처는 운영 설정을 건드리지 않도록 이름 있는 캡처 인스턴스로
+        /// 띄우는데, 매뉴얼 그림은 현장 PC(기본 인스턴스) 화면과 같아야 하기 때문이다. DEBUG 캡처 실행에서만 불린다 —
+        /// 제품 화면의 배지 표시는 그대로다.
+        /// </summary>
+        private static void HideInstanceBadge(Window window)
+        {
+            if (window.FindName("InstanceBadge") is FrameworkElement badge)
+                badge.Visibility = Visibility.Collapsed;
         }
 
         private static void LayoutAt(Window w, double width, double height)
