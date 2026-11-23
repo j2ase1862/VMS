@@ -387,8 +387,14 @@ namespace VMS.VisionSetup
                             {
                                 // fitScroll=true: 내부 ScrollViewer 콘텐츠에 맞춰 창을 키워 전체 스크롤 담기.
                                 var wins = new System.Collections.Generic.List<(string, Window, bool)>();
-                                try { wins.Add(("Sequence", new Views.Sequence.SequenceEditorWindow(
-                                    recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices), false)); }
+                                try
+                                {
+                                    var seqWin = new Views.Sequence.SequenceEditorWindow(
+                                        recipeService, cameraService, dialogService, SequenceEditorContext.ExtraDevices);
+                                    // 매뉴얼 §5.10 — 디폴트 흐름 · I/O Monitor 패널이 보이는 상태(메모리만, 저장 · 장치 연결 없음)
+                                    Capture.ControlCapturer.PrepareSequenceScene(seqWin, dbgLog);
+                                    wins.Add(("Sequence", seqWin, false));
+                                }
                                 catch (Exception ex) { System.IO.File.AppendAllText(dbgLog, "Sequence ctor: " + ex + "\n"); }
                                 try { wins.Add(("BatchTest", new Views.BatchTest.BatchTestWindow(
                                     visionService, recipeService, cameraService, dialogService), false)); }

@@ -2323,40 +2323,56 @@ namespace VMS.VisionSetup.ViewModels
             try
             {
                 // BGR 3채널 또는 그레이 처리
+                string? status;
                 if (img.Channels() >= 3)
                 {
                     var p = img.Get<Vec3b>(iy, ix);
-                    if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
-                    {
-                        cm.PickFromPixel(p.Item0, p.Item1, p.Item2);
-                        StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
-                    }
-                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
-                    {
-                        // Color Extract 도 같은 클릭으로 선택 모델의 H/S/V 범위를 채운다(매뉴얼 §7.4 ②)
-                        cx.PickFromPixel(p.Item0, p.Item1, p.Item2);
-                        StatusMessage = $"Picked @({ix},{iy}) BGR=({p.Item0},{p.Item1},{p.Item2})";
-                    }
+                    status = ApplyColorPick(SelectedVisionTool, ix, iy, p.Item0, p.Item1, p.Item2, isGray: false);
                 }
                 else
                 {
                     byte v = img.Get<byte>(iy, ix);
-                    if (SelectedVisionTool is VisionTools.Color.ColorMatchTool cm)
-                    {
-                        cm.PickFromPixel(v, v, v);
-                        StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
-                    }
-                    else if (SelectedVisionTool is VisionTools.Color.ColorExtractTool cx)
-                    {
-                        cx.PickFromPixel(v, v, v);
-                        StatusMessage = $"Picked @({ix},{iy}) Gray={v}";
-                    }
+                    status = ApplyColorPick(SelectedVisionTool, ix, iy, v, v, v, isGray: true);
                 }
+                if (status != null)
+                    StatusMessage = status;
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Pick failed: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// 클릭한 픽셀 색을 Color Match · Color Extract 의 선택 모델에 넣고 상태 표시줄 문구를 돌려준다.
+        /// 값을 채웠을 때만 "Picked …", 선택 모델이 없어 못 채웠으면 할 일을 알린다. 색 도구가 아니면 null(문구 그대로).
+        /// </summary>
+        internal static string? ApplyColorPick(VisionToolBase? tool, int x, int y, byte b, byte g, byte r, bool isGray)
+        {
+            bool hasModel;
+            bool filled;
+            switch (tool)
+            {
+                case VisionTools.Color.ColorMatchTool cm:
+                    hasModel = cm.SelectedModel != null;
+                    filled = cm.PickFromPixel(b, g, r);
+                    break;
+                case VisionTools.Color.ColorExtractTool cx:
+                    // Color Extract 도 같은 클릭으로 선택 모델의 H/S/V 범위를 채운다(매뉴얼 §7.4 ②)
+                    hasModel = cx.SelectedModel != null;
+                    filled = cx.PickFromPixel(b, g, r);
+                    break;
+                default:
+                    return null;
+            }
+
+            if (filled)
+                return isGray ? $"Picked @({x},{y}) Gray={b}" : $"Picked @({x},{y}) BGR=({b},{g},{r})";
+
+            // 이미지 클릭 한 번이면 선택 모드가 풀리므로 [Pick from Image] 를 다시 누르라고 안내한다
+            return hasModel
+                ? "색을 채우지 못했습니다. [Pick from Image] 를 다시 누른 뒤 이미지를 클릭하세요."
+                : "색을 채우지 못했습니다. Models 에서 모델을 먼저 선택한 뒤 [Pick from Image] 를 다시 누르세요.";
         }
 
         public void OnSearchRegionCreated(ROIShape roi)
