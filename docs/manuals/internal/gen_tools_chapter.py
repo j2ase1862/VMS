@@ -88,11 +88,11 @@ SCENES = {
  "OCV (문자 검증)": ("OCV", "글자 하나가 빠진 인쇄(기준 VMS2658K → 읽힘 VMS268K)를 불일치로 판정한 NG 예"),
  "Code Reader (코드 판독)": ("CodeReader", "GS1 DataMatrix 판독 — 읽은 데이터를 응용 식별자 (01) · (17) · (10) · (21) 로 나눠 해석합니다"),
  "Point Cloud Filter (포인트클라우드 필터)": ("PCFilter", "프레임 점군 28,382 점을 4 mm 복셀로 솎아 5,330 점으로 줄인 결과(81.2% 감소). 뒤의 정합 · 편차 계산이 빨라집니다"),
- "Point Cloud Registration (포인트클라우드 정합)": ("PCRegistration", "−44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK(이 레시피는 Confidence Distance 3 mm · Min Confidence 0.3 · Coarse Alignment 끔)"),
+ "Point Cloud Registration (포인트클라우드 정합)": ("PCRegistration", "−44° 돌아가 놓인 프레임을 기준 점군에 정합 — 회전 RotationZ −44.06°, 평균 오차 2.736 mm, 신뢰도 0.697 이 하한 0.3 이상이라 OK(이 레시피는 Confidence Distance 3 mm · Min Confidence 0.3 · Enable Coarse Alignment 끔)"),
  "Point Cloud Mask Crop (마스크 점군 크롭)": ("PCMaskCrop", "Height Slicer 마스크로 전체 3,145,728 점 가운데 프레임 28,770 점만 남긴 결과"),
  "Point Cloud Cluster (포인트클라우드 클러스터)": ("PCCluster", "남은 점을 덩어리로 나눠 프레임 1 개를 찾은 예 — 치수가 기준 376 × 252 mm(−6 / +6) 안이라 OK"),
  "Point Cloud Deviation (기준 형상 편차)": ("PCDeviation", "비틀린 프레임(합성 불량)의 편차 — 기준에서 5 mm 넘게 벗어난 점이 41.2%로 상한 15% 를 넘어 NG"),
- "Height Slicer (높이 슬라이스)": ("HeightSlicer", "높이 1780~1825 mm 구간의 점만 흰색으로 남긴 2D 마스크 — 바닥 위에 놓인 프레임만 남습니다"),
+ "Height Slicer (높이 슬라이스)": ("HeightSlicer", "높이 1780~1825 mm 구간만 남긴 2D 이미지(범위 밖은 검정) — 바닥 위에 놓인 프레임만 남습니다"),
  "Plane Fit (평면 피팅)": ("PlaneFit", "ROI 안의 점으로 평면을 피팅 — 인라이어 70,403 / 81,114 점, 평면 식과 평면도가 Run Results 에 표시됩니다(이 레시피는 기준면 용도라 판정 끔)"),
  "Geometry 3D (3D 기하)": ("Geometry3D", "높이가 낮아진 프레임(합성 불량)의 점-평면 거리 — 81.44 mm 가 기준 90 ± 5 mm 밖이라 NG"),
  "Point Cloud Line Fit (포인트클라우드 직선 피팅)": ("PCLineFit", "가운데가 8 mm 휜 막대(합성 점군) — 직진도 5.318 mm 가 상한 3 mm 를 넘어 NG"),
@@ -117,10 +117,13 @@ def scene_figure(key, title):
     return (f'<figure><img src="../gs/screenshots/v3/scenes/{name}.jpg" data-width="620" alt="{esc(title)} 실행 예">'
             f'<figcaption>실행 예 — {esc(cap)}</figcaption></figure>\n')
 
+EXPERT_NOTE = '<p>(Expert) 표시가 붙은 칸(묶음 이름 뒤에 붙으면 그 묶음의 칸 전부)은 Expert Mode 를 켜야 보입니다.</p>\n'
+
 out = ['<section id="tools">\n<h2>6. 비전 도구 설명 및 사용법</h2>\n',
  '<p>Tool Palette 의 도구를 카테고리 순서대로 설명합니다. 도구마다 <strong>용도 · 설정 패널 · 주요 파라미터 · 결과 값 · 사용 요령</strong>을 정리했으며, '
  '설정 패널 그림은 Expert Mode 를 끈 기본 상태이고, <strong>실행 예</strong> 그림은 예제 레시피와 이미지를 실제로 실행한 화면(이미지 뷰 · Run Results · 그 레시피의 Tool Settings)입니다. 파라미터의 정확한 범위와 전체 목록은 부록 13.2 를, 도구를 연결하는 방법은 §5.5 를 참고하세요. '
- '각 파라미터 옆의 물음표(?)에 마우스를 올리면 같은 설명이 프로그램 안에서도 표시됩니다.</p>\n']
+ '각 파라미터 옆의 물음표(?)에 마우스를 올리면 그 칸의 도움말이 프로그램 안에서도 표시됩니다. '
+ '표에서 <strong>(Expert)</strong> 로 표시한 칸은 Tool Settings 의 Expert Mode 를 켜야 보입니다.</p>\n']
 sec = 0
 for cat, items in ORDER:
     sec += 1
@@ -138,6 +141,8 @@ for cat, items in ORDER:
             out.append('<table class="cols-3-2-4">\n<tr><th>파라미터</th><th>기본값 / 범위</th><th>설명</th></tr>\n')
             for r in rows: out.append(f'<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td></tr>\n')
             out.append('</table>\n')
+            # Expert Mode 전용 칸 표기 — 이름 뒤 (Expert) + 표 아래 한 줄
+            if any('(Expert)' in r[0] for r in rows): out.append(EXPERT_NOTE)
         elif t and t.get("params"):
             out.append('<table class="cols-3-2-4">\n<tr><th>파라미터</th><th>컨트롤 / 범위</th><th>설명</th></tr>\n')
             for pp in t["params"]:
