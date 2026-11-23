@@ -3205,5 +3205,8 @@ docx/PDF 재생성 204쪽(변동 없음) · 그림 151장 · 경고 0. 새 문�
 - 그림: WPF 35장(AppSetup 2단계 · 조작 상자 · VisionSetup 메인/창 4 · 도구 패널 12 + 분할 2 · 실행 예 11 · 구성도), 웹 39장(Web #169 코드, 화면 버전 v1.48.1, 작업 지시는 진행 중 필터 장면).
   KPI · 메인 전체 화면(`inspect_kpi.jpg` · `inspect_full.jpg`)은 생산 집계가 보이는 종전 그림 유지 — 수동 검사는 집계에 들어가지 않아 캡처 도구로는 0 만 찍힌다.
 - 2.3 방법 B 에 https 설치 절차(Web #170 — 실기 확인 전), 4.12 권한 표는 코드의 권한 목록과 같게 유지(일치 테스트).
-- 찍지 못한 그림: `as/Window_P6_IOConfiguration.png`(캡처에 인스턴스 배지가 들어감 — 새 그림은 `D:\Temp\gscap_r1\as_full\`), `71_msi_weboption.png`(릴리스 MSI 필요),
-  `vs/dlg_Sequence.png`(캡처 도구가 빈 편집기만 찍음). 캡처 기록 `D:\Temp\gs_manual_audit\doc\R1_WPF_재캡처.md` · `R2_Web_재캡처.md`.
+- 처음에 찍지 못한 그림 3장도 반영했다(2026-11-23): 설치 구성 선택 `71_msi_weboption.png` 는 따로 찍었고,
+  IO 보드 단계 `as/Window_P6_IOConfiguration.png`(#634 의 새 칸 이름) 는 DEBUG 캡처가 머리줄의 캡처 인스턴스 배지를 숨기도록 고쳐 다시 찍었다(1920×1640 그대로).
+  시퀀스 편집기 `vs/dlg_Sequence.png` 는 DEBUG 캡처가 [디폴트 생성] 흐름 · Wait Trigger 선택 · I/O Monitor 패널이 열린 장면을 만들도록 고쳐 다시 찍고(3200×1800 그대로, 저장 · 장치 연결 없음),
+  5.10 그림 캡션을 그림에 맞췄다. docx/PDF 재생성 223쪽 · 그림 181장 · 경고 0.
+  캡처 기록 `D:\Temp\gs_manual_audit\doc\R1_WPF_재캡처.md` · `R2_Web_재캡처.md` · `D:\Temp\gs_manual_audit\fix\J_캡처도구_색선택.md`.

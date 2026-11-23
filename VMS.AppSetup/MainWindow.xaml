@@ -111,8 +111,10 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding PageTitle}"
                                    Foreground="#FFD700" FontSize="24" FontWeight="Bold"/>
-                        <!-- 다중 인스턴스 배지 — "instance" 인자로 실행됐을 때만 표시 -->
-                        <Border Visibility="{Binding IsNamedInstance, Converter={StaticResource BoolToVisConverter}}"
+                        <!-- 다중 인스턴스 배지 — "instance" 인자로 실행됐을 때만 표시.
+                             x:Name 은 DEBUG 매뉴얼 캡처가 이 배지를 찾아 숨기는 데 쓴다(Capture/ControlCapturer). -->
+                        <Border x:Name="InstanceBadge"
+                                Visibility="{Binding IsNamedInstance, Converter={StaticResource BoolToVisConverter}}"
                                 Background="#1E3A5F" BorderBrush="#3B6EA5" BorderThickness="1"
                                 CornerRadius="4" Padding="8,3" Margin="14,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding InstanceName, Mode=OneWay, StringFormat='인스턴스: {0}'}"
