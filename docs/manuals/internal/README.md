@@ -40,3 +40,4 @@ python docs/manuals/internal/build_internal.py --embed <출력.html>   # 그림�
 - 절 번호는 옛 13장 구성(9장 MLOps · 10장 딥러닝 · 11 유지보수 · 12 문제 조치 · 13 부록)입니다.
 
 제출본에서 이후 문장을 고치면 이 폴더에는 자동으로 들어오지 않습니다 — 필요한 것만 옮깁니다.
+2026-11-23 에 제출본 v3.2(BODA VMS v1.48.1 build 7)의 개정을 옮겼습니다(REVIEW_NOTES 0-1). 6장 · 부록 표는 제출본과 같은 `(Expert)` 표기를 씁니다.
