@@ -113,6 +113,26 @@ namespace VMS.Core.Tests.Services
         }
 
         [Fact]
+        public async Task DownloadAsync_NoExpectedHash_FailsWithoutHttpCall()
+        {
+            var payload = Encoding.UTF8.GetBytes("unverifiable msi");
+            int calls = 0;
+            using var http = new HttpClient(new StubHandler(_ =>
+            {
+                calls++;
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(payload) };
+            }));
+            using var service = new UpdateInstallService(http, _tempDir);
+
+            var result = await service.DownloadAsync(MakeInfo(payload, sha256: ""));
+
+            Assert.False(result.Ok);
+            Assert.Contains("SHA-256", result.Error);
+            Assert.Equal(0, calls);
+            Assert.False(File.Exists(Path.Combine(_tempDir, "VMS-9.9.9.msi")));
+        }
+
+        [Fact]
         public async Task DownloadAsync_HttpError_Fails()
         {
             var payload = Encoding.UTF8.GetBytes("x");
@@ -452,11 +472,66 @@ namespace VMS.Core.Tests.Services
             using var service = new UpdateInstallService(new HttpClient(new StubHandler(_ =>
                 new HttpResponseMessage(HttpStatusCode.OK))), _tempDir);
 
-            var result = service.LaunchInstaller(Path.Combine(_tempDir, "missing.msi"));
+            var result = service.LaunchInstaller(Path.Combine(_tempDir, "missing.msi"), new string('a', 64));
 
             Assert.False(result.Ok);
             Assert.False(result.UacDeclined);
             Assert.Contains("찾을 수 없습니다", result.Error);
+        }
+
+        [Fact]
+        public void LaunchInstaller_NoExpectedHash_FailsWithoutStartingScript()
+        {
+            var msi = Path.Combine(_tempDir, "VMS-9.9.9.msi");
+            Directory.CreateDirectory(_tempDir);
+            File.WriteAllBytes(msi, new byte[] { 1, 2, 3 });
+            using var service = new UpdateInstallService(new HttpClient(new StubHandler(_ =>
+                new HttpResponseMessage(HttpStatusCode.OK))), _tempDir);
+
+            var result = service.LaunchInstaller(msi, "");
+
+            Assert.False(result.Ok);
+            Assert.False(result.UacDeclined);
+            Assert.Contains("SHA-256", result.Error);
+            Assert.False(File.Exists(Path.Combine(_tempDir, "update-bootstrap.ps1")));
+        }
+
+        /// <summary>
+        /// 설치 직전 해시 재확인 — Web 서비스를 멈추기 전에 대조하고, 다르면 설치 단계로 가지 않고 VMS 를 다시 띄운다.
+        /// </summary>
+        [Fact]
+        public void BuildBootstrapScript_WithExpectedHash_VerifiesBeforeTouchingWebOrInstalling()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\BODA-VMS-Update\VMS-1.48.2.msi",
+                vmsExePath: @"C:\Program Files\BODA VMS\VMS.exe",
+                vmsPid: 1,
+                logPath: @"C:\ProgramData\BODA\VMS\update-bootstrap.log",
+                expectedSha256: "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789");
+
+            int waitAt = script.IndexOf("waiting for VMS exit", StringComparison.Ordinal);
+            int checkAt = script.IndexOf("Get-FileHash -LiteralPath $msiToCheck -Algorithm SHA256", StringComparison.Ordinal);
+            int stopWebAt = script.IndexOf("stopping web service before install", StringComparison.Ordinal);
+            int installAt = script.IndexOf("installing via updater UI", StringComparison.Ordinal);
+            Assert.True(waitAt >= 0 && checkAt > waitAt, "VMS 종료를 기다린 뒤 대조해야 한다");
+            Assert.True(stopWebAt > checkAt, "Web 서비스를 멈추기 전에 대조해야 한다");
+            Assert.True(installAt > checkAt, "설치보다 먼저 대조해야 한다");
+
+            // 기대값은 소문자로 넣고, 다르면 그만두며 VMS 를 다시 띄운다
+            Assert.Contains("$expectedSha = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789'", script);
+            int mismatchAt = script.IndexOf("msi SHA-256 mismatch - install aborted", StringComparison.Ordinal);
+            int exitAt = script.IndexOf("exit 1", mismatchAt, StringComparison.Ordinal);
+            int relaunchAt = script.IndexOf("Start-Process -FilePath 'explorer.exe'", mismatchAt, StringComparison.Ordinal);
+            Assert.True(mismatchAt > 0 && relaunchAt > mismatchAt && exitAt > relaunchAt);
+        }
+
+        [Fact]
+        public void BuildBootstrapScript_WithoutExpectedHash_HasNoHashStep()
+        {
+            var script = UpdateInstallService.BuildBootstrapScript(
+                msiPath: @"C:\Temp\x.msi", vmsExePath: "", vmsPid: 1, logPath: @"C:\Temp\log.txt");
+
+            Assert.DoesNotContain("Get-FileHash", script);
         }
 
         // ── 테스트 헬퍼 ──
