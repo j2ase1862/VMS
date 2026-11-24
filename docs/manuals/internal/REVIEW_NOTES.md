@@ -1,5 +1,12 @@
 # 사내 매뉴얼 초안 — 검토 메모 (2026-11-11)
 
+## 0-2. 11-24 그림 재캡처 (master 61d74bd DEBUG, 확장 옵션 켬)
+
+- 11-23 반영 때 남긴 "사내판 자체 그림" 7장을 build 7 화면으로 다시 찍음. 제출본 그림으로 바꾸지 않은 이유: 사내판 그림에는 ◆PLC Output · ◆레지스트리 단추 · ◆3D 탭 · ◆Mech-Mind 카메라가 보여야 함(제출본 그림은 기본 구성).
+- 환경: `VMS_LICENSE_OPTIONS=3d-camera,robot,mlops,plc,line-scan`. VMS `--instance mancap --capture-inspect`(1 카메라 설정, GS Measure 레시피 사본, MS02 → MS01 → MS03 → MS04) · AppSetup `--capture-fullpage` · VisionSetup `--capture-dialogs`(3 카메라 설정 — Basler 2 · Mech-Mind 1) · `--capture-toolpanels`.
+- 바꾼 그림: `vms/inspect_camera_box.jpg`(권한 안내 줄 · ◆Depth Map · Point Cloud 탭 · [Save 3D]) · `as/FullPage_P2_ApplicationSettings.png`(생산 관리 두 칸 기본 켬, Web SSO 끔) · `vs/dlg_CameraManager.png`(창 높이 · Enabled 줄 온전 · "Mech-Mind" 표시 이름) · `tools/06_Threshold` · `14_Caliper`(+ `split/14_Caliper_split`) · `21_PointCloud_Filter` · `34_Anomaly`(Web 파라미터 연동 라벨 · 공통 버튼 틀).
+- 그대로 둔 것: `vs/dlg_InferenceSettings.png` — 새 캡처가 지금 그림과 화소까지 같음. `tools/24_PointCloud_Cluster.png` — 새 캡처가 33 px 길지만 이번 목록 밖이라 두었음.
+
 ## 0-1. 11-23 반영 (제출본 v3.2 · BODA VMS v1.48.1 build 7 기준)
 
 - 제출본 v3.2 의 문장 개정(제품 코드 한 문장씩 대조)을 사내판 장 번호 · 확장 옵션 맥락에 맞춰 옮김 — 2 · 3 · 4 · 5 · 7 · 8 · 11 · 12장, 9 · 10장은 확장 별책에 맞춤.
