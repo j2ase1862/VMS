@@ -51,10 +51,14 @@ NG 코드 규약: Web 파라미터 NG 코드가 있으면 그것, 없으면 실�
 `system_config.json`:
 
 ```json
-"inspectionHistory": { "enabled": true, "retentionDays": 90 }
+"inspectionHistory": { "enabled": true, "retentionDays": 90, "maxRows": 2000000 }
 ```
 
-- 읽기: `InspectionHistoryOptions.LoadFromAppData()` (JsonDocument 수동 파싱, 손상 시 기본값).
+- `maxRows`(2026-11-24 추가): 행 수 상한, 기본 2,000,000 · clamp [10,000, 50,000,000]. 보존 일수 안이라도 넘치면 가장 오래된 행부터 지운다(행당 약 1 KB → 기본값이면 DB 약 2 GB 이내). 화면에는 없고 설정 파일에서만 바꾼다. 5 초에 1 사이클이면 90 일 ≈ 156 만 행이라 기본값에서는 보존 일수가 먼저 적용되고, 1 초에 1 사이클 라인은 약 23 일분까지만 남는다.
+- 정리 시점(2026-11-24 변경): 종전 "VMS 시작 때 1 회"(재시작 없이 오래 도는 라인에서 무한 증가) → `InspectionHistoryRetentionScheduler` 가 **시작 2 분 뒤 1 회 + 켜 둔 동안 1 시간마다** `ApplyRetention(retentionDays, maxRows)`. 매 회차 설정을 다시 읽고 enabled=false 면 DB 를 열지 않는다. 삭제는 5,000 행 묶음(묶음마다 자동 커밋)이라 writer 배치가 busy_timeout 을 넘기지 않는다. 상한은 정리 사이(최대 1 시간) 생산량만큼 넘칠 수 있다. 행을 지워도 파일은 줄지 않고 빈 페이지를 재사용한다(VACUUM 안 함).
+- 감사 로그 `System · InspectionHistoryRetention`: 시작 회차는 항상, 1 시간 회차는 지운 행이 있거나 실패했을 때만. details 에 `Trigger · RetentionDays · MaxRows · Deleted · DeletedByAge · DeletedByMaxRows · Remaining`.
+- Retention Settings 미리보기의 "삭제 예정" 은 설정 파일의 maxRows 까지 반영한다(`PreviewCleanup(dbFolder, days, maxRows)`).
+- 읽기: `InspectionHistoryOptions.LoadFromAppData()` (JsonDocument 수동 파싱, 손상 시 기본값. 숫자가 아닌 값은 그 키만 기본값).
 - 쓰기: Retention Settings 창(JsonNode 격리 편집). AppSetup/ConfigurationService 는 `SystemConfigMerge` 로 미지 키를 보존하므로 수정 불필요.
 - 프리셋: Conservative 365 / Standard 90 / Minimal 30 (`RetentionPresets.InspectionHistory`, GS 개요 §5.10 표 InspHistory 열, `ManualPresetConsistencyTests` 가 일치 검증).
 
@@ -71,6 +75,7 @@ NG 코드 규약: Web 파라미터 NG 코드가 있으면 그것, 없으면 실�
 - 탭: 이력 목록(+상세: 도구 결과 표, 이미지 `BitmapImage` OnLoad/DecodePixelWidth 1280, 파일 없음 안내, 폴더 열기) · 일별 집계(`GetDailySummary`) · NG 파레토(`GetNgCodeCounts` top 30, 비율·누적).
 - CSV: 현재 필터 **전량**을 5000건 청크로 스트리밍(`ExportAllToCsv`), UTF-8 BOM, RFC 4180 인용(`InspectionHistoryCsvExporter`).
 - 문서 캡처: `--capture-dialogs` "InspectionHistory" (DB 비어 있으면 대표 6행을 VM 에만 주입).
+- 화면 스모크 테스트(2026-11-24): `VMS.Tests/Views/InspectionHistoryWindowSmokeTests` — VMS App.xaml 리소스를 전용 STA 스레드에 올리고(`WpfAppHost`), 창 내용을 Border 로 옮겨 화면 없이 측정 · 배치한다(띄우지 않은 Window 는 Collapsed 라 그리지 않음). 목록 행 생성 · 세 탭 · 상세(사진 있음 · 파일 없음 · 이미지 없음)를 그리고, Dispatcher 예외(v1.28.0 의 TwoWay 체크박스 열 같은 것)나 바인딩 경로 오류가 있으면 실패. 두 결함을 일부러 다시 넣어 실패하는 것을 확인했다. 새 WPF 창도 `[Collection(WpfAppCollection.Name)]` + `WpfAppHost.Invoke` 로 같은 방식의 스모크를 붙일 수 있다.
 - 테스트 격리: `ExecuteStep` 을 도는 `InspectionServiceIntegrationTests` 도 정적 상태 컬렉션에 편입 — 병렬 시 상대 저장소에 행이 섞였다.
 
 ## 8. 원래 3단계 메모 (참고)
