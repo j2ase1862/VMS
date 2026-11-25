@@ -202,7 +202,9 @@ namespace VMS.ViewModels
                     AuditLogRetention.EffectiveWholeFileDays(audit, perCat));
                 var abSum = RetentionPreviewService.PreviewAutoBackupCleanup(backupDir, ab);
                 var queueSum = RetentionPreviewService.PreviewUploadQueueCleanup(queueDir, queue);
-                var histSum = VMS.Services.LocalHistory.LocalInspectionHistoryStore.PreviewCleanup(appData, hist);
+                // 행 수 상한(inspectionHistory.maxRows)은 화면에 없고 설정 파일 값 그대로 — 실제 정리와 같은 기준으로 미리 본다.
+                var histMaxRows = InspectionHistoryOptions.LoadFromFile(_configPath).MaxRows;
+                var histSum = VMS.Services.LocalHistory.LocalInspectionHistoryStore.PreviewCleanup(appData, hist, histMaxRows);
                 var catSum = RetentionPreviewService.PreviewAuditCategoryFilter(auditDir, perCat);
 
                 PreviewAuditSummary = FormatSummary(auditSum);
@@ -221,7 +223,8 @@ namespace VMS.ViewModels
                     ["AutoBackupRetentionDays"] = ab,
                     ["UploadQueueRetentionDays"] = queue,
                     ["InspectionHistoryRetentionDays"] = hist,
-                    ["InspectionHistoryEnabled"] = InspectionHistoryEnabled ? 1 : 0
+                    ["InspectionHistoryEnabled"] = InspectionHistoryEnabled ? 1 : 0,
+                    ["InspectionHistoryMaxRows"] = histMaxRows
                 };
                 foreach (var item in CategoryRetentions)
                     _lastPreviewSettings[$"Category.{item.Category}"] = item.Days;

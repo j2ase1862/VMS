@@ -35,6 +35,9 @@ namespace VMS
         // 검사 이미지 보존 기간 정리 — 시작 때 1회 + 실행 중 하루 1회 (VM-41)
         private VMS.Services.ImageRetentionScheduler? _imageRetentionScheduler;
 
+        // 로컬 검사 이력 보존 정리 — 시작 2 분 뒤 1회 + 실행 중 1 시간마다 (보존 일수 + 행 수 상한)
+        private VMS.Services.LocalHistory.InspectionHistoryRetentionScheduler? _historyRetentionScheduler;
+
         // Web 서버 좌석 임대 (spec §5b) — 로컬 license.lic 없는 클라이언트 PC 에서만 활성.
         private VMS.Core.Services.LicenseClient? _licenseClient;
 
@@ -214,18 +217,9 @@ namespace VMS
                 Debug.WriteLine($"[App] UploadQueueRetention 실패 (best-effort): {ex.Message}");
             }
 
-            // 로컬 검사 이력(inspection_history.db) 보존 정책 — inspectionHistory.retentionDays
-            // (기본 90, clamp [1, 3650]) 보다 오래된 행 삭제. enabled=false 면 DB 를 열지 않는다.
-            try
-            {
-                var histOptions = InspectionHistoryOptions.LoadFromAppData();
-                if (histOptions.Enabled)
-                    VMS.Services.LocalHistory.LocalInspectionHistoryStore.Instance.PurgeOlderThan(histOptions.RetentionDays);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[App] InspectionHistoryRetention 실패 (best-effort): {ex.Message}");
-            }
+            // 로컬 검사 이력(inspection_history.db) 보존 정리는 아래 InspectionHistoryRetentionScheduler 가
+            // 시작 2 분 뒤 + 1 시간마다 돈다(보존 일수 + 행 수 상한). 종전처럼 시작 때만 지우면 재시작 없이
+            // 오래 도는 라인에서 DB 가 계속 커졌다.
 
             // 백업 · 복원이 실행 중인 SQLite DB 를 온라인 백업으로 복사하게 한다 (수동 · 자동 백업 공통).
             BackupRestoreService.DatabaseCopier = SqliteDatabaseCopier.Copy;
@@ -259,6 +253,20 @@ namespace VMS
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] ImageRetentionScheduler 시작 실패 (best-effort): {ex.Message}");
+            }
+
+            // 로컬 검사 이력 보존 정리 — 시작 2 분 뒤 한 번 + 켜 둔 동안 1 시간마다, 보존 일수 · 행 수 상한.
+            // 매 회차 설정을 다시 읽고, enabled=false 면 DB 를 열지 않는다.
+            try
+            {
+                _historyRetentionScheduler = new VMS.Services.LocalHistory.InspectionHistoryRetentionScheduler(
+                    InspectionHistoryOptions.LoadFromAppData,
+                    () => VMS.Services.LocalHistory.LocalInspectionHistoryStore.Instance);
+                _historyRetentionScheduler.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] InspectionHistoryRetentionScheduler 시작 실패 (best-effort): {ex.Message}");
             }
 
             var splash = new SplashWindow();
@@ -1436,6 +1444,7 @@ namespace VMS
                 // 다음 시작 시 last_backup_at.txt 기반으로 자동 재개.
                 try { _autoBackupScheduler?.Dispose(); } catch { }
                 try { _imageRetentionScheduler?.Dispose(); } catch { }
+                try { _historyRetentionScheduler?.Dispose(); } catch { }
 
                 // 정리 완료 → 즉시 종료
                 Process.GetCurrentProcess().Kill();

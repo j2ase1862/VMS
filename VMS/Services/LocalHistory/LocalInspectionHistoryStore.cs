@@ -32,6 +32,7 @@ namespace VMS.Services.LocalHistory
         private const int SchemaVersion = 1;
         private const int MaxBatch = 256;
         private const int MaxPendingImages = 2000;
+        internal const int PurgeChunk = 5000;
         private const string UtcFormat = "yyyy-MM-dd'T'HH:mm:ss.fff'Z'";
 
         private static readonly Lazy<LocalInspectionHistoryStore> _instance =
@@ -440,45 +441,91 @@ namespace VMS.Services.LocalHistory
         }
 
         public int PurgeOlderThan(int retentionDays)
+            => ApplyRetention(retentionDays, maxRows: null, trigger: "Manual", auditWhenNothingDeleted: true).DeletedByAge;
+
+        public InspectionHistoryRetentionResult ApplyRetention(int retentionDays, int? maxRows, string trigger,
+            bool auditWhenNothingDeleted)
         {
             retentionDays = InspectionHistoryOptions.ClampRetention(retentionDays);
-            int deleted = 0;
+            if (maxRows.HasValue && maxRows.Value < 1) maxRows = 1;
+            int byAge = 0, byCap = 0;
             long remaining = 0;
+            bool failed = false;
             try
             {
                 using var conn = Open();
-                using (var cmd = conn.CreateCommand())
+                // 한 번에 다 지우면 쓰기 잠금이 길어져 writer 배치가 busy_timeout(5 s)을 넘길 수 있다 —
+                // 오래된 쪽부터 작은 묶음으로 나눠 지운다(묶음마다 자동 커밋).
+                var cut = FormatUtc(Cutoff(retentionDays));
+                while (true)
                 {
-                    cmd.CommandText = "DELETE FROM InspectionHistory WHERE InspectedAtUtc < @cut";
-                    cmd.Parameters.AddWithValue("@cut", FormatUtc(Cutoff(retentionDays)));
-                    deleted = cmd.ExecuteNonQuery();
+                    using var del = conn.CreateCommand();
+                    del.CommandText = @"
+                        DELETE FROM InspectionHistory WHERE Id IN (
+                            SELECT Id FROM InspectionHistory WHERE InspectedAtUtc < @cut
+                             ORDER BY InspectedAtUtc, Id LIMIT @n)";
+                    del.Parameters.AddWithValue("@cut", cut);
+                    del.Parameters.AddWithValue("@n", PurgeChunk);
+                    var k = del.ExecuteNonQuery();
+                    byAge += k;
+                    if (k < PurgeChunk) break;
                 }
-                using (var cnt = conn.CreateCommand())
+
+                remaining = CountAll(conn);
+                if (maxRows.HasValue)
                 {
-                    cnt.CommandText = "SELECT COUNT(*) FROM InspectionHistory";
-                    remaining = Convert.ToInt64(cnt.ExecuteScalar(), CultureInfo.InvariantCulture);
+                    var excess = remaining - maxRows.Value;
+                    while (excess > 0)
+                    {
+                        var n = (int)Math.Min(PurgeChunk, excess);
+                        using var del = conn.CreateCommand();
+                        del.CommandText = @"
+                            DELETE FROM InspectionHistory WHERE Id IN (
+                                SELECT Id FROM InspectionHistory ORDER BY InspectedAtUtc, Id LIMIT @n)";
+                        del.Parameters.AddWithValue("@n", n);
+                        var k = del.ExecuteNonQuery();
+                        if (k == 0) break;
+                        byCap += k;
+                        excess -= k;
+                    }
+                    remaining = CountAll(conn);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[InspectionHistory] Purge 실패: {ex.Message}");
+                failed = true;
+                Debug.WriteLine($"[InspectionHistory] 보존 정리 실패: {ex.Message}");
             }
 
-            try
+            if (auditWhenNothingDeleted || byAge + byCap > 0 || failed)
             {
-                AuditLogger.Instance.Log(
-                    AuditCategory.System, "InspectionHistoryRetention", AuditOutcome.Success,
-                    source: nameof(LocalInspectionHistoryStore),
-                    details: $"RetentionDays={retentionDays}, Deleted={deleted}, Remaining={remaining}");
+                try
+                {
+                    var cap = maxRows.HasValue ? maxRows.Value.ToString(CultureInfo.InvariantCulture) : "-";
+                    AuditLogger.Instance.Log(
+                        AuditCategory.System, "InspectionHistoryRetention",
+                        failed ? AuditOutcome.Failure : AuditOutcome.Success,
+                        source: nameof(LocalInspectionHistoryStore),
+                        details: $"Trigger={trigger}, RetentionDays={retentionDays}, MaxRows={cap}, " +
+                                 $"Deleted={byAge + byCap}, DeletedByAge={byAge}, DeletedByMaxRows={byCap}, Remaining={remaining}");
+                }
+                catch { /* 감사 로그 실패는 정리 결과에 영향 없음 */ }
             }
-            catch { /* 감사 로그 실패는 정리 결과에 영향 없음 */ }
-            return deleted;
+            return new InspectionHistoryRetentionResult(byAge, byCap, remaining, failed);
+        }
+
+        private static long CountAll(SqliteConnection conn)
+        {
+            using var cnt = conn.CreateCommand();
+            cnt.CommandText = "SELECT COUNT(*) FROM InspectionHistory";
+            return Convert.ToInt64(cnt.ExecuteScalar(), CultureInfo.InvariantCulture);
         }
 
         /// <summary>
         /// 보존 설정 창 미리보기용 — DB 파일이 없으면 열지 않고 안내만 반환 (파일 생성 부작용 없음).
+        /// <paramref name="maxRows"/> 를 주면 보존 일수 뒤에 남는 행이 상한을 넘는 만큼도 삭제 예정에 더한다.
         /// </summary>
-        public static RetentionPreviewSummary PreviewCleanup(string dbFolder, int retentionDays)
+        public static RetentionPreviewSummary PreviewCleanup(string dbFolder, int retentionDays, int? maxRows = null)
         {
             const string policy = "InspectionHistoryRetention";
             var path = Path.Combine(dbFolder, DbFileName);
@@ -497,11 +544,40 @@ namespace VMS.Services.LocalHistory
                            MIN(CASE WHEN InspectedAtUtc < @cut THEN InspectedAtUtc END),
                            MIN(CASE WHEN InspectedAtUtc >= @cut THEN InspectedAtUtc END)
                       FROM InspectionHistory";
-                cmd.Parameters.AddWithValue("@cut", FormatUtc(Cutoff(InspectionHistoryOptions.ClampRetention(retentionDays))));
-                using var r = cmd.ExecuteReader();
-                r.Read();
-                var affected = r.IsDBNull(0) ? 0 : r.GetInt32(0);
-                var remaining = r.IsDBNull(1) ? 0 : r.GetInt32(1);
+                var cut = FormatUtc(Cutoff(InspectionHistoryOptions.ClampRetention(retentionDays)));
+                cmd.Parameters.AddWithValue("@cut", cut);
+                int affected, remaining;
+                DateTime? oldestAffected, oldestRemaining;
+                using (var r = cmd.ExecuteReader())
+                {
+                    r.Read();
+                    affected = r.IsDBNull(0) ? 0 : r.GetInt32(0);
+                    remaining = r.IsDBNull(1) ? 0 : r.GetInt32(1);
+                    oldestAffected = r.IsDBNull(2) ? null : ParseUtc(r.GetString(2));
+                    oldestRemaining = r.IsDBNull(3) ? null : ParseUtc(r.GetString(3));
+                }
+
+                // 행 수 상한 — 보존 일수 뒤에 남는 행 중 오래된 것부터 넘치는 만큼.
+                var byCap = maxRows.HasValue && maxRows.Value > 0 && remaining > maxRows.Value ? remaining - maxRows.Value : 0;
+                if (byCap > 0)
+                {
+                    using var next = conn.CreateCommand();
+                    next.CommandText = @"
+                        SELECT InspectedAtUtc FROM InspectionHistory WHERE InspectedAtUtc >= @cut
+                         ORDER BY InspectedAtUtc, Id LIMIT 1 OFFSET @skip";
+                    next.Parameters.AddWithValue("@cut", cut);
+                    next.Parameters.AddWithValue("@skip", byCap);
+                    oldestRemaining = next.ExecuteScalar() is string s ? ParseUtc(s) : null;
+                    if (oldestAffected == null)
+                    {
+                        using var first = conn.CreateCommand();
+                        first.CommandText = "SELECT MIN(InspectedAtUtc) FROM InspectionHistory";
+                        oldestAffected = first.ExecuteScalar() is string f ? ParseUtc(f) : null;
+                    }
+                    affected += byCap;
+                    remaining -= byCap;
+                }
+
                 var size = new FileInfo(path).Length;
                 return new RetentionPreviewSummary
                 {
@@ -510,8 +586,8 @@ namespace VMS.Services.LocalHistory
                     FilesRemaining = remaining,
                     // 행 단위라 바이트는 파일 크기 비례 추정 — 표시용.
                     BytesAffected = affected + remaining > 0 ? (long)(size * ((double)affected / (affected + remaining))) : 0,
-                    OldestAffectedUtc = r.IsDBNull(2) ? null : ParseUtc(r.GetString(2)),
-                    OldestRemainingUtc = r.IsDBNull(3) ? null : ParseUtc(r.GetString(3)),
+                    OldestAffectedUtc = oldestAffected,
+                    OldestRemainingUtc = oldestRemaining,
                     Note = affected == 0 ? $"삭제 예정 없음 (보관 {remaining}건)" : null
                 };
             }

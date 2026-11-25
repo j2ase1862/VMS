@@ -33,7 +33,21 @@ namespace VMS.Services.LocalHistory
 
         /// <summary>보존 일수보다 오래된 행 삭제. 결과를 AuditCategory.System 으로 기록.</summary>
         int PurgeOlderThan(int retentionDays);
+
+        /// <summary>
+        /// 보존 정리 — 보존 일수보다 오래된 행을 지우고, <paramref name="maxRows"/> 를 주면 남은 행이 그 수를
+        /// 넘는 만큼 가장 오래된 행부터 더 지운다. 작은 묶음으로 나눠 지워 검사 기록 쓰기를 오래 막지 않는다.
+        /// 감사 로그(System · InspectionHistoryRetention)는 지운 행이 있거나 실패했을 때, 또는
+        /// <paramref name="auditWhenNothingDeleted"/> 일 때 남긴다. 예외를 던지지 않는다.
+        /// </summary>
+        InspectionHistoryRetentionResult ApplyRetention(int retentionDays, int? maxRows, string trigger, bool auditWhenNothingDeleted);
         long CountOlderThan(int retentionDays);
         long FileSizeBytes { get; }
+    }
+
+    /// <summary>보존 정리 결과 — 보존 일수로 지운 행 · 행 수 상한으로 지운 행 · 남은 행.</summary>
+    public sealed record InspectionHistoryRetentionResult(int DeletedByAge, int DeletedByMaxRows, long Remaining, bool Failed)
+    {
+        public int Deleted => DeletedByAge + DeletedByMaxRows;
     }
 }
